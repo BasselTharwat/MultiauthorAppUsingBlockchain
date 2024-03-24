@@ -4,8 +4,7 @@ import Story from '../../ethereum/story';
 import web3 from '../../ethereum/web3';
 import { useRouter } from 'next/router';
 import { Card, Button, Modal, Form, Spinner } from 'react-bootstrap';
-import { Link } from '../../routes.js'
-
+import { Link } from '../../routes.js';
 
 const ViewStory = () => {
     const router = useRouter();
@@ -109,26 +108,31 @@ const ViewStory = () => {
 
     return(
         <Layout  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Card style={{ width: '35rem', marginBottom: '10px' ,  display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Card style={{ width: '50rem', marginBottom: '10px', textAlign: 'center' }}>
                 <Card.Body>
                     <Card.Title>Title</Card.Title>
-                    <Card.Text>
+                    <Card.Text style={{ overflowWrap: 'break-word', wordWrap: 'break-word' }}>
                         {storySummary.storyStrings[counter]}
                     </Card.Text>
-                    <Card.Footer style={{marginBottom: '10px'}}>
+                    <Card.Footer style={{marginBottom: '10px', overflowWrap: 'break-word', wordWrap: 'break-word' }}>
                         {"Meet the authors : " + storySummary.authorsForReact}
                     </Card.Footer>
-                    <Button variant="primary" onClick={incrementCounter}>Next Chapter</Button>
+                    <Button variant="primary" onClick={incrementCounter} style={{marginRight: "10px"}}>Next Chapter</Button>
                     <Button variant="primary" onClick={decrementCounter}>Previous Chapter</Button>
                 </Card.Body>
             </Card>
             <>
-                <Button variant="secondary" onClick={handleShow}>
+                <Button variant="secondary" onClick={handleShow} style={{marginRight: "10px"}}>
                     Create a request to join
                 </Button>
                 <Link route={`/stories/${address}/viewRequests`}>
-                    <Button variant='secondary' disabled={!isAuthor}>
+                    <Button variant='secondary' disabled={!isAuthor} style={{marginRight: "10px"}}>
                     {"View Requests (Only for authors)"}
+                    </Button>
+                </Link>
+                <Link route={`/stories/${address}/newChapter`}>
+                    <Button variant='secondary' disabled={!isAuthor}>
+                    {"New Chapter (Only for authors)"}
                     </Button>
                 </Link>
 
@@ -147,7 +151,7 @@ const ViewStory = () => {
                     <Modal.Footer>
                         <Form.Text style={{flex:"1"}}>Total number of requests to join: {storySummary.requestsToJoin.length}</Form.Text>
                         <Button variant="secondary" onClick={handleClose}>
-                            Cancel
+                            Close
                         </Button>
                         <Button variant="primary" onClick={handleCreateRequest}>
                             {loading && <Spinner

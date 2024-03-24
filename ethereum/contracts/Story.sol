@@ -53,12 +53,17 @@ contract Story {
         require(authorsForSolidity[msg.sender], "Only an accepted author can approve a request");
         require(!authorsForSolidity[requestsToJoin[_index].author], "Author of the request is already included in the list of authors");
 
-        authorsForSolidity[requestsToJoin[_index].author] = true;
-        authorsForReact.push(requestsToJoin[_index].author);
-
-        // Remove the struct from the array
-        delete requestsToJoin[_index];
+        uint256 lastIndex = requestsToJoin.length - 1;
+        // Swap the request at the given index with the last request in the array
+        RequestToJoin memory lastRequest = requestsToJoin[lastIndex];
+        requestsToJoin[_index] = lastRequest;
+        // Delete the last element by reducing the array length
+        requestsToJoin.pop();
+        // Update mappings and arrays accordingly
+        authorsForSolidity[lastRequest.author] = true;
+        authorsForReact.push(lastRequest.author);
     }
+
 
     function addChapter(string memory _chapter) public {
         require(authorsForSolidity[msg.sender], "Only an accepted author can add a chapter");
