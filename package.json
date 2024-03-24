@@ -1,0 +1,27 @@
+{
+  "name": "multi-author-app-on-blockchain",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node server.js",
+    "clear-cache": "rm -rf .next"
+  },
+  "dependencies": {
+    "@helia/json": "^3.0.2",
+    "@truffle/hdwallet-provider": "^2.1.12",
+    "bootstrap": "^5.3.3",
+    "dotenv": "^16.4.5",
+    "fs-extra": "^11.2.0",
+    "helia": "^4.1.0",
+    "next": "^12.3.4",
+    "next-routes": "^1.4.2",
+    "react": "^18.2.0",
+    "react-bootstrap": "^2.10.2",
+    "react-dom": "^18.2.0",
+    "semantic-ui-css": "^2.5.0",
+    "semantic-ui-react": "^2.1.5",
+    "solc": "^0.8.9",
+    "web3": "^4.1.2"
+  }
+}
