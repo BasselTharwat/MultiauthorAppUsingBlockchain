@@ -5,7 +5,6 @@ import web3 from '../../ethereum/web3';
 import { useRouter } from 'next/router';
 import { Card, Button, Modal, Form, Spinner } from 'react-bootstrap';
 import { Link } from '../../routes.js';
-import ReactQuill from 'react-quill';
 import Files from '../../components/Files';
 
 const ViewStory = () => {
@@ -40,6 +39,8 @@ const ViewStory = () => {
                 authorsForReact: found[2], 
                 requestsToJoin: found[3]
             });
+
+            console.log(found);
           
         } catch (error) {
             console.error('Error fetching story info:', error);
@@ -89,6 +90,7 @@ const ViewStory = () => {
         } else {
             setCounter(0);
         }
+        fetchChapter(counter);
     };
 
     const decrementCounter = () => {
@@ -97,6 +99,7 @@ const ViewStory = () => {
         } else {
             setCounter(storySummary.storyStrings.length - 1);
         }
+        fetchChapter(counter);
     };
 
     const handleProposalChange = (event) => {
@@ -104,18 +107,16 @@ const ViewStory = () => {
     };
 
     const fetchChapter = async (counter) => {
-        console.log("num of chapters "+ storySummary.storyStrings.length);
-        if(storySummary.storyStrings.length>0){
-            if(counter){
-                const chapterCidFetched = await story.methods.storyStrings(counter).call();
-                setChapterCid(chapterCidFetched);
-            }
-            else{
-                const chapterCidFetched = await story.methods.storyStrings(0).call();
-                setChapterCid(chapterCidFetched);
-
-            }
-    }
+        let chapterCidFetched
+        if(counter){
+            chapterCidFetched = await story.methods.storyStrings(counter).call();
+        }
+        else{
+            chapterCidFetched = await story.methods.storyStrings(0).call();
+        }
+        if(chapterCidFetched){
+            setChapterCid(chapterCidFetched);
+        }
     };
 
 
@@ -124,16 +125,16 @@ const ViewStory = () => {
     useEffect(() => {
         isAuthorCall();
         viewStoryInfo();
-        fetchChapter();
+        fetchChapter(counter);
 
-    }, [counter]);
+    }, []);
 
 
     return(
         <Layout  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Card style={{ width: '50rem', marginBottom: '10px', textAlign: 'center' }}>
                 <Card.Body>
-                    <Card.Title>Title</Card.Title>
+                    <Card.Title>{"Chapter "+ (counter+1)}</Card.Title>
                     <Card.Text style={{ overflowWrap: 'break-word', wordWrap: 'break-word' }}>
                     {chapterCid && ( 
                         <Files chapterCid={chapterCid} /> 

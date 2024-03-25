@@ -3,6 +3,7 @@ import Layout from '../../components/layout';
 import Story from '../../ethereum/story';
 import { useRouter } from 'next/router';
 import web3 from '../../ethereum/web3';
+import { Button, Spinner } from 'react-bootstrap';
 
 
 const NewChapter = () => {
@@ -28,9 +29,9 @@ const NewChapter = () => {
             body: formData,
         });
         const ipfsHash = await res.text();
-        console.log(ipfsHash);
 
         const accounts = await web3.eth.getAccounts();
+        console.log(accounts);
         const gasEstimate = await story.methods.addChapter(ipfsHash).estimateGas({
             from: accounts[0]
         });
@@ -58,19 +59,10 @@ const NewChapter = () => {
         uploadFile(e.target.files[0]);
       };
 
-      /*const loadRecent = async () => {
-        try {
-          const res = await fetch("/api/files");
-          const json = await res.json();
-          setCid(json.ipfs_pin_hash);
-        } catch (e) {
-          console.log(e);
-          alert("trouble loading files");
-        }
-      };*/
-
       return (
         <Layout>
+            <h5>Here, you can add your new chapter. 
+                You can add a text file, video, audio... you name it.</h5>
             <div>
                 <input
                   type="file"
@@ -79,12 +71,21 @@ const NewChapter = () => {
                   onChange={handleChange}
                   style={{ display: "none" }}
                 />
-                <button
+                <Button
+                    style={{marginTop:"15 px"}}
+                    variant='primary'
                     disabled={uploading}
                     onClick={() => inputFile.current.click()}
                   >
-                    {uploading ? "Uploading..." : "Upload"}
-                  </button>
+                    {uploading && <Spinner
+                                as="span"
+                                animation="border"
+                                size="sm"
+                                role="status"
+                                aria-hidden="true"
+                                />}
+                    {!uploading && "Add chapter" }
+                  </Button>
                 </div>
                 
         </Layout>

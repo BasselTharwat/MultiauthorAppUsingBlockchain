@@ -26,7 +26,6 @@ const StoryIndex = () => {
                 <thead>
                     <tr>
                         <th>Address</th>
-                        <th>Title</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -38,7 +37,6 @@ const StoryIndex = () => {
                                     </a>
                                 </Link>}
                             </td>
-                            <td></td> {/* Name cell */}
                         </tr>
                     ))}
                 </tbody>
