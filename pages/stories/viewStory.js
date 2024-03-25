@@ -5,6 +5,8 @@ import web3 from '../../ethereum/web3';
 import { useRouter } from 'next/router';
 import { Card, Button, Modal, Form, Spinner } from 'react-bootstrap';
 import { Link } from '../../routes.js';
+import ReactQuill from 'react-quill';
+import Files from '../../components/Files';
 
 const ViewStory = () => {
     const router = useRouter();
@@ -26,11 +28,11 @@ const ViewStory = () => {
     const [requestProposal, setRequestProposal] = useState("");
     const [loading, setLoading] = useState(false);
     const [isAuthor, setIsAuthor] = useState(false);
+    const [chapterCid, setChapterCid] = useState('');
 
     async function viewStoryInfo() {
         try {
             const found = await story.methods.getSummary().call();
-            console.log(found);
 
             setStorySummary({
                 mainIdea: found[0],
@@ -80,11 +82,6 @@ const ViewStory = () => {
         setLoading(false);
     };
     
-    useEffect(() => {
-        isAuthorCall();
-        viewStoryInfo();
-
-    }, []);
 
     const incrementCounter = () => {
         if (counter < storySummary.storyStrings.length - 1) {
@@ -106,13 +103,41 @@ const ViewStory = () => {
         setRequestProposal(event.target.value);
     };
 
+    const fetchChapter = async (counter) => {
+        console.log("num of chapters "+ storySummary.storyStrings.length);
+        if(storySummary.storyStrings.length>0){
+            if(counter){
+                const chapterCidFetched = await story.methods.storyStrings(counter).call();
+                setChapterCid(chapterCidFetched);
+            }
+            else{
+                const chapterCidFetched = await story.methods.storyStrings(0).call();
+                setChapterCid(chapterCidFetched);
+
+            }
+    }
+    };
+
+
+
+
+    useEffect(() => {
+        isAuthorCall();
+        viewStoryInfo();
+        fetchChapter();
+
+    }, [counter]);
+
+
     return(
         <Layout  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Card style={{ width: '50rem', marginBottom: '10px', textAlign: 'center' }}>
                 <Card.Body>
                     <Card.Title>Title</Card.Title>
                     <Card.Text style={{ overflowWrap: 'break-word', wordWrap: 'break-word' }}>
-                        {storySummary.storyStrings[counter]}
+                    {chapterCid && ( 
+                        <Files chapterCid={chapterCid} /> 
+                    )} 
                     </Card.Text>
                     <Card.Footer style={{marginBottom: '10px', overflowWrap: 'break-word', wordWrap: 'break-word' }}>
                         {"Meet the authors : " + storySummary.authorsForReact}
