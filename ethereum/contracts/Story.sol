@@ -5,12 +5,15 @@ pragma solidity ^0.8.9;
 contract StoryFactory {
     address[] public deployedStories;
 
-        function createStory() public returns (address){
+    
+    event StoryCreated(address indexed storyAddress);
+
+    function createStory() public returns (address) {
         Story newStory = new Story(msg.sender);
         deployedStories.push(address(newStory));
+        emit StoryCreated(address(newStory));
         return address(newStory);
     }
-
 
     function getDeployedStories() public view returns (address[] memory) {
         return deployedStories;

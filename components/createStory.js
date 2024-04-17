@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button, Form, Input, Message } from 'semantic-ui-react';
 import factory from '../ethereum/factory.js';
 import web3 from '../ethereum/web3.js';
+import story from '../ethereum/story.js';
 
 const CreateStory = () =>{
     const[mainIdea, setMainIdea] = useState("");
@@ -29,21 +30,27 @@ const CreateStory = () =>{
           });
     
           const encode = await factory.methods.createStory().encodeABI();
-        
-          const storyAddress = await factory.methods.createStory().send({
+
+         const transactionReceipt = await factory.methods.createStory().send({
             from: accounts[0],
             gas: gasEstimate.toString(),
             data: encode
           });
+          //get the address of the story from the receipt
+          let storyAddress = transactionReceipt.logs[0].topics[1].slice(2);
+          //remove extra leading zeros
+          storyAddress = '0x' + storyAddress.replace(/^0+/, '');
           
           //create a json for the story to be stored on the ipfs & ipns
           const storyJSON = {
-            "storyAddress":storyAddress,
+            "storyAddress":storyAddress, 
             "title":title,
             "mainIdea":mainIdea,
             "likes":0,
             "authors":[{"address":accounts[0]}],
-            "chapters":[]
+            "chapters":[],
+            "previousStoryHashes":[],
+            "drafts":[]
           }
 
           const response = await fetch("../api/createStoryIPFS",{

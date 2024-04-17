@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     if (req.method === "POST") {
       try {
         const storyJSON = req.body;
-        
+        console.log(storyJSON);
         //setup helia and the ipns module of it
         const helia = await createHelia();
         const name = ipns(helia);
@@ -19,12 +19,20 @@ export default async function handler(req, res) {
         //pin json to pinata
         const pinataResponse = await pinata.pinJSONToIPFS(storyJSON);
 
+        console.log("pinata response: ", pinataResponse.IpfsHash);
+
+        storyJSON.previousStoryHashes.push(pinataResponse.IpfsHash);
+
         //create an ipns hash of the story
         const keyInfo = await helia.libp2p.services.keychain.createKey(storyJSON.storyAddress,"secp256k1",4096);
         const peerId = await helia.libp2p.services.keychain.exportPeerId(keyInfo.name);
         
         //publish the pinned ipfs to the created ipns key
         await name.publish(peerId, pinataResponse.IpfsHash);
+        
+        const result = await name.resolve(peerId);
+        const ipnsHash = result.cid;
+        console.log("ipns hash:",ipnsHash);
 
         res.status(200).send("Successfully created a story");
 
