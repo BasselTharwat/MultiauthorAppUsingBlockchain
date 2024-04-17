@@ -5,33 +5,57 @@ import web3 from '../ethereum/web3.js';
 
 const CreateStory = () =>{
     const[mainIdea, setMainIdea] = useState("");
+    const[title, setTitle] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
     
-    const handleInputChange = (event) => {
+    const handleInputChangeMainIdea = (event) => {
         setMainIdea(event.target.value);
     };
+    const handleInputChangeTitle = (event) => {
+        setTitle(event.target.value);
+    }
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         setLoading(true);
         setError('');
         try{
+        //create a story on the blockchain
         const accounts = await web3.eth.getAccounts();
-        const gasEstimate = await factory.methods.createStory(mainIdea).estimateGas({
+        const gasEstimate = await factory.methods.createStory().estimateGas({
             from: accounts[0]
           });
     
-          const encode = await factory.methods.createStory(mainIdea).encodeABI();
+          const encode = await factory.methods.createStory().encodeABI();
         
-          await factory.methods.createStory(mainIdea).send({
+          const storyAddress = await factory.methods.createStory().send({
             from: accounts[0],
             gas: gasEstimate.toString(),
             data: encode
           });
+          
+          //create a json for the story to be stored on the ipfs & ipns
+          const storyJSON = {
+            "storyAddress":storyAddress,
+            "title":title,
+            "mainIdea":mainIdea,
+            "likes":0,
+            "authors":[{"address":accounts[0]}],
+            "chapters":[]
+          }
+
+          const response = await fetch("../api/createStoryIPFS",{
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+              },
+            body: JSON.stringify(storyJSON)
+              });
 
           setMainIdea("");
+          setTitle("");
     }catch(err){
         setError(err.message);
     }
@@ -49,7 +73,14 @@ const CreateStory = () =>{
                     <label>Write the main idea</label>
                     <Input
                         value={mainIdea}
-                        onChange={handleInputChange}
+                        onChange={handleInputChangeMainIdea}
+                    />
+                </Form.Field>
+                <Form.Field>
+                    <label>Give your story a title</label>
+                    <Input
+                        value={title}
+                        onChange={handleInputChangeTitle}
                     />
                 </Form.Field>
                 <Message error header="Oops!" content= {error}/>

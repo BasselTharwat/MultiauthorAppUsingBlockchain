@@ -5,9 +5,10 @@ pragma solidity ^0.8.9;
 contract StoryFactory {
     address[] public deployedStories;
 
-        function createStory(string memory _mainIdea) public {
-        Story newStory = new Story(_mainIdea, msg.sender);
+        function createStory() public returns (address){
+        Story newStory = new Story(msg.sender);
         deployedStories.push(address(newStory));
+        return address(newStory);
     }
 
 
@@ -17,8 +18,6 @@ contract StoryFactory {
 }
 
 contract Story {
-    string public mainIdea;
-    string[] public storyStrings;
     mapping(address => bool) public authorsForSolidity;
     address[] public authorsForReact;
 
@@ -31,8 +30,7 @@ contract Story {
 
     RequestToJoin[] public requestsToJoin;
 
-    constructor(string memory _mainIdea, address _mainAuthor) {
-        mainIdea = _mainIdea;
+    constructor(address _mainAuthor) {
         authorsForSolidity[_mainAuthor] = true;
         authorsForReact.push(_mainAuthor);
     }
@@ -64,18 +62,9 @@ contract Story {
         authorsForReact.push(lastRequest.author);
     }
 
-
-    function addChapter(string memory _chapter) public {
-        require(authorsForSolidity[msg.sender], "Only an accepted author can add a chapter");
-
-        storyStrings.push(_chapter);
-    }
-
     function getSummary() public view returns (
-        string memory, string[] memory, address[] memory, RequestToJoin[] memory) {
+        address[] memory, RequestToJoin[] memory) {
         return ( 
-            mainIdea,
-            storyStrings,
             authorsForReact,
             requestsToJoin
         );
