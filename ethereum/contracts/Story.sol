@@ -8,8 +8,8 @@ contract StoryFactory {
     
     event StoryCreated(address indexed storyAddress);
 
-    function createStory() public returns (address) {
-        Story newStory = new Story(msg.sender);
+    function createStory(string memory usernameAndPassword, string memory pem) public returns (address) {
+        Story newStory = new Story(msg.sender, usernameAndPassword, pem);
         deployedStories.push(address(newStory));
         emit StoryCreated(address(newStory));
         return address(newStory);
@@ -23,7 +23,9 @@ contract StoryFactory {
 contract Story {
     mapping(address => bool) public authorsForSolidity;
     address[] public authorsForReact;
-
+    bool public reported;
+    string public usernameAndPassword;
+    string public pem;
 
     struct RequestToJoin {
         string proposal;
@@ -33,9 +35,12 @@ contract Story {
 
     RequestToJoin[] public requestsToJoin;
 
-    constructor(address _mainAuthor) {
+    constructor(address _mainAuthor, string memory _usernameAndPassword, string memory _pem) {
         authorsForSolidity[_mainAuthor] = true;
         authorsForReact.push(_mainAuthor);
+        reported = false;
+        usernameAndPassword = _usernameAndPassword;
+        pem = _pem;
     }
 
     function createRequestToJoin(string memory _proposal) public {
@@ -66,10 +71,13 @@ contract Story {
     }
 
     function getSummary() public view returns (
-        address[] memory, RequestToJoin[] memory) {
+        address[] memory, RequestToJoin[] memory, bool, string memory, string memory) {
         return ( 
             authorsForReact,
-            requestsToJoin
+            requestsToJoin,
+            reported,
+            usernameAndPassword,
+            pem
         );
     }
 

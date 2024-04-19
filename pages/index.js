@@ -1,21 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout';
 import factory from '../ethereum/factory';
-import {Table} from 'react-bootstrap';
+import {Table} from 'react-bootstrap'; 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import CreateStory from '../components/createStory';
-import web3 from '../ethereum/web3';
 import Story from '../ethereum/story';
 import { Link } from '../routes.js'
 
 
 const StoryIndex = () => {
     const [stories, setStories] = useState([]);
+    const [storiesJSON,setStoriesJSON] = useState([]); 
 
     useEffect(() => {
         async function fetchStories() {
             const fetchedStories = await factory.methods.getDeployedStories().call();
-            setStories(fetchedStories);
+            setStories(fetchedStories); 
+            let story;
+            let summary;  
+            for (let i = 0; i < stories.length; i++) {
+                story = Story(stories[i]);
+                summary = await story.methods.getSummary().call(); 
+  
+                const response = await fetch("/api/fetchStoryFromIPFS", {
+                    method: "POST",   
+                    headers: {  
+                        "Content-Type": "application/json"  
+                    },
+                    body: JSON.stringify({usernameAndPassword: summary[3], pem: summary[4]})
+                }); 
+ 
+                const responseJSON = await response.json();  
+                console.log(responseJSON);      
+                const { storyJSON } = responseJSON;
+                console.log(storyJSON);
+                
+                }
         }
         fetchStories();
     }, []);

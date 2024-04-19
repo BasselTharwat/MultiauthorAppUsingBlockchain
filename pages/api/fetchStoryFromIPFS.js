@@ -1,16 +1,12 @@
-const pinataSDK = require("@pinata/sdk");
-const pinata = new pinataSDK({ pinataJWTKey: process.env.PINATA_JWT });
+import fetch from 'node-fetch';
 import { createHelia } from "helia";
 import { ipns } from '@helia/ipns';
 
 
 
-
 export default async function handler(req, res) {
     if (req.method === "POST") {
-      try {
-        //get the template of a storyJSON 
-        const storyJSON = req.body.storyJSON;
+      try { 
         const usernameAndPassword = req.body.usernameAndPassword;
         const pem = req.body.pem;
         
@@ -22,17 +18,21 @@ export default async function handler(req, res) {
         const keyInfo = await helia.libp2p.services.keychain.importKey(usernameAndPassword, pem, usernameAndPassword);
         //export peerId
         const peerId = await helia.libp2p.services.keychain.exportPeerId(keyInfo.name);
-
-
-        //pin JSON to ipfs
-        const pinataResponse = await pinata.pinJSONToIPFS(storyJSON);
-        const ipfsHash = pinataResponse.IpfsHash;
         
-        //publish the ipfsHash to the created ipns key
-        await name.publish(peerId, ipfsHash);
+        
+        const result = await name.resolve(peerId);
+        const ipnsHash = result.cid;
+        
+        // Fetch the storyJSON from the IPFS gateway
+        const url = `https://gateway.ipfs.io/ipfs/${ipnsHash}`;
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch storyJSON from ${url}`);
+        }
+        const storyJSON = await response.json();
 
-        res.status(200).send("Successfully created a story");
-
+        res.status(200).json(storyJSON);
+    
       } catch (e) {
         console.log(e);
         res.status(500).send("Server Error");

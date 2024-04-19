@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Button, Form, Input, Message } from 'semantic-ui-react';
+import web3 from '../ethereum/web3';
 import factory from '../ethereum/factory.js';
-import web3 from '../ethereum/web3.js';
-import story from '../ethereum/story.js';
+
 
 const CreateStory = () =>{
     const[mainIdea, setMainIdea] = useState("");
     const[title, setTitle] = useState("");
+    const[type, setType] = useState("");
+    const[genre, setGenre] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -16,22 +18,36 @@ const CreateStory = () =>{
     };
     const handleInputChangeTitle = (event) => {
         setTitle(event.target.value);
-    }
+    };
+    const handleInputChangeType = (event) => {
+        setType(event.target.value);
+    };
+    const handleInputChangeGenre = (event) => {
+        setGenre(event.target.value);
+    };
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         setLoading(true);
         setError('');
-        try{
+        try{      
+            
+
+        const response = await fetch("../api/createKeyIPFS",{
+            method: "POST"
+                });
+        const credentials = await response.json();        
+        const { usernameAndPassword, pem } = credentials;
+
         //create a story on the blockchain
         const accounts = await web3.eth.getAccounts();
-        const gasEstimate = await factory.methods.createStory().estimateGas({
+        const gasEstimate = await factory.methods.createStory(usernameAndPassword, pem).estimateGas({
             from: accounts[0]
           });
     
-          const encode = await factory.methods.createStory().encodeABI();
+        const encode = await factory.methods.createStory(usernameAndPassword, pem).encodeABI();
 
-         const transactionReceipt = await factory.methods.createStory().send({
+        const transactionReceipt = await factory.methods.createStory(usernameAndPassword, pem).send({
             from: accounts[0],
             gas: gasEstimate.toString(),
             data: encode
@@ -40,29 +56,41 @@ const CreateStory = () =>{
           let storyAddress = transactionReceipt.logs[0].topics[1].slice(2);
           //remove extra leading zeros
           storyAddress = '0x' + storyAddress.replace(/^0+/, '');
-          
+        
+    
+
           //create a json for the story to be stored on the ipfs & ipns
           const storyJSON = {
             "storyAddress":storyAddress, 
+            "type":type,
+            "genre":genre,
             "title":title,
             "mainIdea":mainIdea,
-            "likes":0,
-            "authors":[{"address":accounts[0]}],
+            "likes":[],//stores account addresses of likers
+            "reports":[],//stores account addresses of reporters
+            "authors":[accounts[0]],//stores account addresses of authors
             "chapters":[],
             "previousStoryHashes":[],
-            "drafts":[]
+            "drafts":[],
+            "timestamp":Date.now()
           }
 
-          const response = await fetch("../api/createStoryIPFS",{
+
+
+          await fetch("../api/createStoryIPFS",{
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
               },
-            body: JSON.stringify(storyJSON)
+            body: JSON.stringify({usernameAndPassword: usernameAndPassword,
+                pem: pem,
+                storyJSON: storyJSON})
               });
 
           setMainIdea("");
           setTitle("");
+          setGenre("");
+          setType("");
     }catch(err){
         setError(err.message);
     }
@@ -88,6 +116,20 @@ const CreateStory = () =>{
                     <Input
                         value={title}
                         onChange={handleInputChangeTitle}
+                    />
+                </Form.Field>
+                <Form.Field>
+                    <label>Choose the type of your story (Text/Audio/Video/Image)</label>
+                    <Input
+                        value={type}
+                        onChange={handleInputChangeType}
+                    />
+                </Form.Field>
+                <Form.Field>
+                    <label>Identify the genre</label>
+                    <Input
+                        value={genre}
+                        onChange={handleInputChangeGenre}
                     />
                 </Form.Field>
                 <Message error header="Oops!" content= {error}/>
