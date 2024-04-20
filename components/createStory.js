@@ -77,7 +77,7 @@ const CreateStory = () =>{
 
 
 
-          await fetch("../api/createStoryIPFS",{
+          await fetch("../api/createOrUpdateStoryIPFS",{
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

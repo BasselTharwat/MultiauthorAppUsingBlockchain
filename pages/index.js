@@ -6,11 +6,19 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import CreateStory from '../components/createStory';
 import Story from '../ethereum/story';
 import { Link } from '../routes.js'
+import { useGlobalState } from '../context/storyJSONContext.js';
 
 
 const StoryIndex = () => {
     const [storiesJSON,setStoriesJSON] = useState([]);
-    const [loading, setLoading] = useState(true); // Add loading state
+    const [loading, setLoading] = useState(true); 
+    const { storyJSON, setStoryJSON } = useGlobalState();
+    
+
+    const handleAddressClick = (story) => {
+        setStoryJSON(story); // Set the storyJSON state when the address link is clicked
+    };
+
 
     useEffect(() => {
         async function fetchStories() {
@@ -20,7 +28,7 @@ const StoryIndex = () => {
             const fetchedStoriesJSON = [];
             for (let i = 0; i < fetchedStories.length; i++) {
                 story = Story(fetchedStories[i]);
-                summary = await story.methods.getSummary().call(); 
+                summary = await story.methods.getSummary().call();      
 
                 const response = await fetch("/api/fetchStoryFromIPFS", {
                     method: "POST",   
@@ -61,7 +69,7 @@ const StoryIndex = () => {
                         <tr key={story.storyAddress}>
                             <td>
                                 <Link route={`/stories/${story.storyAddress}/viewStory`}>
-                                    <a>{story.storyAddress}</a>
+                                    <a onClick={() => handleAddressClick(story)}>{story.storyAddress}</a>
                                 </Link>
                             </td>
                             <td>{story.title}</td>

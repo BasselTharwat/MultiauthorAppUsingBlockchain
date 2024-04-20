@@ -31,7 +31,7 @@ export default async function handler(req, res) {
         //publish the ipfsHash to the created ipns key
         await name.publish(peerId, ipfsHash);
 
-        res.status(200).send("Successfully created a story");
+        res.status(200).send("Successfully created/updated a story");
 
       } catch (e) {
         console.log(e);

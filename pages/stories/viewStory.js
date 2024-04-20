@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import { Card, Button, Modal, Form, Spinner } from 'react-bootstrap';
 import { Link } from '../../routes.js';
 import Files from '../../components/Files';
+import { useGlobalState } from '../../context/storyJSONContext.js';
 
 const ViewStory = () => {
     const router = useRouter();
@@ -15,33 +16,37 @@ const ViewStory = () => {
     const address = segments.pop();
     const story = Story(address);
 
+
     const [show, setShow] = useState(false);
     const [storySummary, setStorySummary] = useState({
-        mainIdea: "",
-        storyStrings: [],
         authorsForReact: [],
-        requestsToJoin: []
+        requestsToJoin: [],
+        reported: false,
+        usernameAndPassword: "",
+        pem: ""
     });
+
+    const { storyJSON, setStoryJSON } = useGlobalState();
 
     const [counter, setCounter] = useState(0);
     const [requestProposal, setRequestProposal] = useState("");
     const [loading, setLoading] = useState(false);
     const [isAuthor, setIsAuthor] = useState(false);
     const [chapterCid, setChapterCid] = useState('');
+    
 
-    async function viewStoryInfo() {
+    async function fetchStoryInfo() {
         try {
             const found = await story.methods.getSummary().call();
 
             setStorySummary({
-                mainIdea: found[0],
-                storyStrings: found[1],
-                authorsForReact: found[2], 
-                requestsToJoin: found[3]
+                authorsForReact: found[0],
+                requestsToJoin: found[1],
+                reported: found[2], 
+                usernameAndPassword: found[3],
+                pem: found[4]
             });
 
-            console.log(found);
-          
         } catch (error) {
             console.error('Error fetching story info:', error);
         }
@@ -108,15 +113,17 @@ const ViewStory = () => {
 
     const fetchChapter = async (counter) => {
         let chapterCidFetched
-        if(counter){
-            chapterCidFetched = await story.methods.storyStrings(counter).call();
-        }
-        else{
-            chapterCidFetched = await story.methods.storyStrings(0).call();
-        }
-        if(chapterCidFetched){
-            setChapterCid(chapterCidFetched);
-        }
+        if(storyJSON.chapters.length > 0){
+            if(counter){
+                chapterCidFetched = storyJSON.chapters[counter].cid;
+            }
+            else{ 
+                chapterCidFetched = storyJSON.chapters[0].cid;
+            }
+            if(chapterCidFetched){
+                setChapterCid(chapterCidFetched);
+            }
+       }
     };
 
 
@@ -124,7 +131,7 @@ const ViewStory = () => {
 
     useEffect(() => {
         isAuthorCall();
-        viewStoryInfo();
+        fetchStoryInfo();
         fetchChapter(counter);
 
     }, []);
@@ -191,9 +198,10 @@ const ViewStory = () => {
                         </Button>
                     </Modal.Footer>
                 </Modal>
-            </>
+            </>             
         </Layout>
     );
 };
 
 export default ViewStory;
+
