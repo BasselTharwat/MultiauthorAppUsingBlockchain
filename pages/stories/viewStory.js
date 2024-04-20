@@ -83,7 +83,7 @@ const ViewStory = () => {
             setRequestProposal("");
     
         } catch (error) {
-            console.error('Error fetching story info:', error);
+            console.error('Error creating request:', error);
         }
         setLoading(false);
     };
@@ -110,6 +110,46 @@ const ViewStory = () => {
     const handleProposalChange = (event) => {
         setRequestProposal(event.target.value);
     };
+
+    const handleLike = async (event) => {
+        event.preventDefault();
+        setLoading(true);
+        try{
+            //get the account address that wants to like the story
+            const fetchedAccount = (await web3.eth.getAccounts())[0];
+            
+            //convert the array of likers' accounts to a set to speed up the search process
+            const likersSet = new Set(storyJSON.likes);
+            
+            //we want to make sure the same user can't like the story more than once
+            if (likersSet.has(fetchedAccount)) {
+                console.log("Account liked the story before.");
+            } else {
+                
+                //update the json
+                const updatedStoryJSON = storyJSON.likes.push(fetchedAccount);
+                setStoryJSON(updatedStoryJSON);
+
+                //update the json on the ipfs
+                await fetch("../../api/createOrUpdateStoryIPFS",{
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({usernameAndPassword: storySummary.usernameAndPassword,
+                        pem: storySummary.pem,
+                        storyJSON: storyJSON})
+                    });
+            }
+
+
+        }catch(error) {
+            console.error('Error liking the story:', error);
+        }
+
+        setLoading(false);
+
+    }    
 
     const fetchChapter = async (counter) => {
         let chapterCidFetched
@@ -164,10 +204,23 @@ const ViewStory = () => {
                     </Button>
                 </Link>
                 <Link route={`/stories/${address}/newChapter`}>
-                    <Button variant='secondary' disabled={!isAuthor}>
+                    <Button variant='secondary' disabled={!isAuthor} style={{marginRight: "10px"}}>
                     {"New Chapter (Only for authors)"}
                     </Button>
                 </Link>
+                <br></br>
+                <Button variant='success' disabled={loading} onClick={handleLike} style={{marginTop: "10px", marginRight: "10px"}}>
+                {loading ?
+                        <Spinner
+                        as="span"
+                        animation="border"
+                        size="sm"
+                        role="status"
+                        aria-hidden="true"
+                        /> :
+                        "Like"
+                    }
+                </Button>
 
                 <Modal show={show} onHide={handleClose}>
                     <Modal.Header closeButton>
