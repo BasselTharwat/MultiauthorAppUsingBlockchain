@@ -9,19 +9,19 @@ import { Link } from '../routes.js'
 
 
 const StoryIndex = () => {
-    const [stories, setStories] = useState([]);
-    const [storiesJSON,setStoriesJSON] = useState([]); 
+    const [storiesJSON,setStoriesJSON] = useState([]);
+    const [loading, setLoading] = useState(true); // Add loading state
 
     useEffect(() => {
         async function fetchStories() {
             const fetchedStories = await factory.methods.getDeployedStories().call();
-            setStories(fetchedStories); 
             let story;
             let summary;  
-            for (let i = 0; i < stories.length; i++) {
-                story = Story(stories[i]);
+            const fetchedStoriesJSON = [];
+            for (let i = 0; i < fetchedStories.length; i++) {
+                story = Story(fetchedStories[i]);
                 summary = await story.methods.getSummary().call(); 
-  
+
                 const response = await fetch("/api/fetchStoryFromIPFS", {
                     method: "POST",   
                     headers: {  
@@ -29,39 +29,54 @@ const StoryIndex = () => {
                     },
                     body: JSON.stringify({usernameAndPassword: summary[3], pem: summary[4]})
                 }); 
- 
-                const responseJSON = await response.json();  
-                console.log(responseJSON);      
-                const { storyJSON } = responseJSON;
-                console.log(storyJSON);
-                
-                }
+
+                const storyJSON = await response.json();  
+                fetchedStoriesJSON.push(storyJSON);
+            }
+            setStoriesJSON(fetchedStoriesJSON); // Update storiesJSON state
+            setLoading(false); // Set loading to false
         }
         fetchStories();
     }, []);
 
     const renderStories = () => {
-        return (
-            <Table striped bordered hover style={{marginTop:"10px"}}>
+        if (loading) {
+            return <p>Fetching stories...</p>;
+        } else {
+            return (
+                <Table striped bordered hover style={{ marginTop: "10px" }}>
                 <thead>
                     <tr>
                         <th>Address</th>
+                        <th>Title</th> 
+                        <th>Genre</th>
+                        <th>Type</th>
+                        <th>Main Idea</th>
+                        <th>Likes</th>
+                        <th>Authors</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {stories.map(address => (
-                        <tr key={address}>
-                            <td>{<Link route={`/stories/${address}/viewStory`}>
-                                    <a>
-                                        {address}
-                                    </a>
-                                </Link>}
+                    {storiesJSON && storiesJSON.map(story => (
+                        <tr key={story.storyAddress}>
+                            <td>
+                                <Link route={`/stories/${story.storyAddress}/viewStory`}>
+                                    <a>{story.storyAddress}</a>
+                                </Link>
                             </td>
+                            <td>{story.title}</td>
+                            <td>{story.genre}</td>
+                            <td>{story.type}</td>
+                            <td>{story.mainIdea}</td>
+                            <td>{story.likes.length}</td>
+                            <td>{story.authors.length}</td>
                         </tr>
                     ))}
                 </tbody>
-            </Table>    
-        );
+            </Table>
+            
+            );
+        }
     };
     
     return (
@@ -76,3 +91,6 @@ const StoryIndex = () => {
 };
 
 export default StoryIndex;
+
+
+
