@@ -23,7 +23,6 @@ contract StoryFactory {
 contract Story {
     mapping(address => bool) public authorsForSolidity;
     address[] public authorsForReact;
-    bool public reported;
     string public usernameAndPassword;
     string public pem;
 
@@ -38,7 +37,6 @@ contract Story {
     constructor(address _mainAuthor, string memory _usernameAndPassword, string memory _pem) {
         authorsForSolidity[_mainAuthor] = true;
         authorsForReact.push(_mainAuthor);
-        reported = false;
         usernameAndPassword = _usernameAndPassword;
         pem = _pem;
     }
@@ -71,11 +69,10 @@ contract Story {
     }
 
     function getSummary() public view returns (
-        address[] memory, RequestToJoin[] memory, bool, string memory, string memory) {
+        address[] memory, RequestToJoin[] memory, string memory, string memory) {
         return ( 
             authorsForReact,
             requestsToJoin,
-            reported,
             usernameAndPassword,
             pem
         );

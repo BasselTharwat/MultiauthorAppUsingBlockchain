@@ -21,7 +21,6 @@ const ViewStory = () => {
     const [storySummary, setStorySummary] = useState({
         authorsForReact: [],
         requestsToJoin: [],
-        reported: false,
         usernameAndPassword: "",
         pem: ""
     });
@@ -30,9 +29,11 @@ const ViewStory = () => {
 
     const [counter, setCounter] = useState(0);
     const [requestProposal, setRequestProposal] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [loadingLike, setLoadingLike] = useState(false);
     const [isAuthor, setIsAuthor] = useState(false);
     const [chapterCid, setChapterCid] = useState('');
+    const [loadingReport, setLoadingReport] = useState(false);
+    const [loadingCreateRequest, setLoadingCreateRequest] = useState(false);
     
 
     async function fetchStoryInfo() {
@@ -41,10 +42,9 @@ const ViewStory = () => {
 
             setStorySummary({
                 authorsForReact: found[0],
-                requestsToJoin: found[1],
-                reported: found[2], 
-                usernameAndPassword: found[3],
-                pem: found[4]
+                requestsToJoin: found[1], 
+                usernameAndPassword: found[2],
+                pem: found[3]
             });
 
         } catch (error) {
@@ -65,7 +65,7 @@ const ViewStory = () => {
 
     const handleCreateRequest = async (event) => {
         event.preventDefault();
-        setLoading(true);
+        setLoadingCreateRequest(true);
         try {
             const accounts = await web3.eth.getAccounts();
             const gasEstimate = await story.methods.createRequestToJoin(requestProposal).estimateGas({
@@ -85,12 +85,12 @@ const ViewStory = () => {
         } catch (error) {
             console.error('Error creating request:', error);
         }
-        setLoading(false);
+        setLoadingCreateRequest(false);
     };
     
 
     const incrementCounter = () => {
-        if (counter < storySummary.storyStrings.length - 1) {
+        if (counter < storyJSON.chapters.length - 1) {
             setCounter(prevCounter => prevCounter + 1);
         } else {
             setCounter(0);
@@ -102,7 +102,7 @@ const ViewStory = () => {
         if (counter > 0) {
             setCounter(prevCounter => prevCounter - 1);
         } else {
-            setCounter(storySummary.storyStrings.length - 1);
+            setCounter(storyJSON.chapters.length - 1);
         }
         fetchChapter(counter);
     };
@@ -113,7 +113,7 @@ const ViewStory = () => {
 
     const handleLike = async (event) => {
         event.preventDefault();
-        setLoading(true);
+        setLoadingLike(true);
         try{
             //get the account address that wants to like the story
             const fetchedAccount = (await web3.eth.getAccounts())[0];
@@ -147,9 +147,58 @@ const ViewStory = () => {
             console.error('Error liking the story:', error);
         }
 
-        setLoading(false);
+        setLoadingLike(false);
 
     }    
+
+    const handleReport = async (event) => {
+        event.preventDefault();
+        setLoadingReport(true);
+        try{
+            //get the account address that wants to like the story
+            const fetchedAccount = (await web3.eth.getAccounts())[0];
+            
+            //convert the array of likers' accounts to a set to speed up the search process
+            const reportersSet = new Set(storyJSON.reports);
+            
+            //we want to make sure the same user can't like the story more than once
+            if (reportersSet.has(fetchedAccount)) {
+                console.log("Account reported the story before.");
+            } else {
+                
+            //update the json
+            let updatedStoryJSON = storyJSON.reports.push(fetchedAccount);
+            
+
+            if(storyJSON.reports.length > 2){ //arbitrary number
+                storyJSON.reported = true;
+                updatedStoryJSON = storyJSON;
+            } 
+
+            setStoryJSON(updatedStoryJSON);
+            
+
+            //update the json on the ipfs
+            await fetch("../../api/createOrUpdateStoryIPFS",{
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({usernameAndPassword: storySummary.usernameAndPassword,
+                    pem: storySummary.pem,
+                    storyJSON: storyJSON})
+                });
+            }
+
+
+        }catch(error) {
+            console.error('Error reporting the story:', error);
+        }
+
+        setLoadingReport(false);
+
+    }    
+
 
     const fetchChapter = async (counter) => {
         let chapterCidFetched
@@ -187,6 +236,8 @@ const ViewStory = () => {
                         <Files chapterCid={chapterCid} /> 
                     )} 
                     </Card.Text>
+                    {counter &&
+                        <Card.Text>{"Created at "+ storyJSON.chapters[counter].timestamp}</Card.Text>}
                     <Card.Footer style={{marginBottom: '10px', overflowWrap: 'break-word', wordWrap: 'break-word' }}>
                         {"Meet the authors : " + storySummary.authorsForReact}
                     </Card.Footer>
@@ -209,8 +260,8 @@ const ViewStory = () => {
                     </Button>
                 </Link>
                 <br></br>
-                <Button variant='success' disabled={loading} onClick={handleLike} style={{marginTop: "10px", marginRight: "10px"}}>
-                {loading ?
+                <Button variant='success' disabled={loadingLike} onClick={handleLike} style={{marginTop: "10px", marginRight: "10px"}}>
+                {loadingLike ?
                         <Spinner
                         as="span"
                         animation="border"
@@ -221,6 +272,19 @@ const ViewStory = () => {
                         "Like"
                     }
                 </Button>
+                <Button variant='danger' disabled={loadingReport} onClick={handleReport} style={{marginTop: "10px", marginRight: "10px"}}>
+                {loadingReport ?
+                        <Spinner
+                        as="span"
+                        animation="border"
+                        size="sm"
+                        role="status"
+                        aria-hidden="true"
+                        /> :
+                        "Report"
+                    }
+                </Button>
+
 
                 <Modal show={show} onHide={handleClose}>
                     <Modal.Header closeButton>
@@ -240,14 +304,14 @@ const ViewStory = () => {
                             Close
                         </Button>
                         <Button variant="primary" onClick={handleCreateRequest}>
-                            {loading && <Spinner
+                            {loadingCreateRequest && <Spinner
                                 as="span"
                                 animation="border"
                                 size="sm"
                                 role="status"
                                 aria-hidden="true"
                                 />}
-                            {!loading && "Create Request" }
+                            {!loadingCreateRequest && "Create Request" }
                         </Button>
                     </Modal.Footer>
                 </Modal>

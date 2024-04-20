@@ -47,8 +47,8 @@ const NewChapter = () => {
         headers: {
             "Content-Type": "application/json"
           },
-        body: JSON.stringify({usernameAndPassword: found[3],
-            pem: found[4],
+        body: JSON.stringify({usernameAndPassword: found[2],
+            pem: found[3],
             storyJSON: storyJSON})
           });
 

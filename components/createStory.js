@@ -68,6 +68,7 @@ const CreateStory = () =>{
             "mainIdea":mainIdea,
             "likes":[],//stores account addresses of likers
             "reports":[],//stores account addresses of reporters
+            "reported": false,
             "authors":[accounts[0]],//stores account addresses of authors
             "chapters":[],
             "previousStoryHashes":[],

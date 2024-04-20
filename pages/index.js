@@ -35,12 +35,15 @@ const StoryIndex = () => {
                     headers: {  
                         "Content-Type": "application/json"  
                     },
-                    body: JSON.stringify({usernameAndPassword: summary[3], pem: summary[4]})
+                    body: JSON.stringify({usernameAndPassword: summary[2], pem: summary[3]})
                 }); 
 
                 const storyJSON = await response.json();  
+
+                console.log(storyJSON);
                 fetchedStoriesJSON.push(storyJSON);
             }
+
             setStoriesJSON(fetchedStoriesJSON); // Update storiesJSON state
             setLoading(false); // Set loading to false
         }
@@ -62,6 +65,7 @@ const StoryIndex = () => {
                         <th>Main Idea</th>
                         <th>Likes</th>
                         <th>Authors</th>
+                        <th>Reported</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -78,6 +82,7 @@ const StoryIndex = () => {
                             <td>{story.mainIdea}</td>
                             <td>{story.likes.length}</td>
                             <td>{story.authors.length}</td>
+                            <td>{story.reported.toString()}</td>
                         </tr>
                     ))}
                 </tbody>
