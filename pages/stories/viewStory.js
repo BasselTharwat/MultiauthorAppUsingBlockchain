@@ -87,6 +87,22 @@ const ViewStory = () => {
         }
         setLoadingCreateRequest(false);
     };
+
+    
+    function interpretTimestamp(foundTimestamp){
+        // Convert the Unix timestamp to milliseconds (Unix timestamps are in seconds)
+        const milliseconds = Number(foundTimestamp) * 1000;
+        // Create a new Date object with the converted milliseconds
+        const date = new Date(milliseconds);
+        // Use the Date object's methods to get the desired date and time components
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1; // Month index starts from 0, so add 1
+        const day = date.getDate();
+        // Construct the formatted date string in "dd/mm/yy" format
+        const formattedDate = `${day}/${month}/${year.toString().slice(-2)}`;
+        return formattedDate;
+    }
+
     
 
     const incrementCounter = () => {
@@ -129,6 +145,10 @@ const ViewStory = () => {
                 //update the json
                 const updatedStoryJSON = storyJSON.likes.push(fetchedAccount);
                 setStoryJSON(updatedStoryJSON);
+                
+                const controller = new AbortController()
+                // many minutes timeout:
+                const timeoutId = setTimeout(() => controller.abort(), 5000000)
 
                 //update the json on the ipfs
                 await fetch("../../api/createOrUpdateStoryIPFS",{
@@ -138,9 +158,11 @@ const ViewStory = () => {
                     },
                     body: JSON.stringify({usernameAndPassword: storySummary.usernameAndPassword,
                         pem: storySummary.pem,
-                        storyJSON: storyJSON})
+                        storyJSON: storyJSON,
+                        signal: controller.signal})
                     });
             }
+            
 
 
         }catch(error) {
@@ -178,6 +200,9 @@ const ViewStory = () => {
             setStoryJSON(updatedStoryJSON);
             
 
+            const controller = new AbortController()
+            // many minutes timeout:
+            const timeoutId = setTimeout(() => controller.abort(), 5000000)
             //update the json on the ipfs
             await fetch("../../api/createOrUpdateStoryIPFS",{
                 method: "POST",
@@ -186,7 +211,8 @@ const ViewStory = () => {
                 },
                 body: JSON.stringify({usernameAndPassword: storySummary.usernameAndPassword,
                     pem: storySummary.pem,
-                    storyJSON: storyJSON})
+                    storyJSON: storyJSON}),
+                signal: controller.signal
                 });
             }
 
@@ -236,8 +262,10 @@ const ViewStory = () => {
                         <Files chapterCid={chapterCid} /> 
                     )} 
                     </Card.Text>
-                    {counter &&
-                        <Card.Text>{"Created at "+ storyJSON.chapters[counter].timestamp}</Card.Text>}
+                    {/**
+                    {counter && storyJSON.chapters[counter] &&
+                        (<Card.Text>{"Created at "+ interpretTimestamp(storyJSON.chapters[counter].timestamp)}</Card.Text>)}
+                    */}    
                     <Card.Footer style={{marginBottom: '10px', overflowWrap: 'break-word', wordWrap: 'break-word' }}>
                         {"Meet the authors : " + storySummary.authorsForReact}
                     </Card.Footer>

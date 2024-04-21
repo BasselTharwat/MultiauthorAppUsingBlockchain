@@ -78,6 +78,10 @@ const CreateStory = () =>{
 
 
 
+          const controller = new AbortController()
+                // many minutes timeout:
+          const timeoutId = setTimeout(() => controller.abort(), 5000000)
+
           await fetch("../api/createOrUpdateStoryIPFS",{
             method: "POST",
             headers: {
@@ -85,7 +89,8 @@ const CreateStory = () =>{
               },
             body: JSON.stringify({usernameAndPassword: usernameAndPassword,
                 pem: pem,
-                storyJSON: storyJSON})
+                storyJSON: storyJSON}),
+            signal: controller.signal
               });
 
           setMainIdea("");

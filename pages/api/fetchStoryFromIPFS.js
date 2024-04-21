@@ -23,9 +23,14 @@ export default async function handler(req, res) {
         const result = await name.resolve(peerId);
         const ipnsHash = result.cid;
         
+
+        const controller = new AbortController()
+        // many minutes timeout:
+        const timeoutId = setTimeout(() => controller.abort(), 5000000)
+
         // Fetch the storyJSON from the IPFS gateway
         const url = `https://gateway.ipfs.io/ipfs/${ipnsHash}`;
-        const response = await fetch(url);
+        const response = await fetch(url, {signal: controller.signal});
         if (!response.ok) {
             throw new Error(`Failed to fetch storyJSON from ${url}`);
         }

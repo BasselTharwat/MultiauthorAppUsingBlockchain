@@ -27,20 +27,27 @@ const StoryIndex = () => {
             let summary;  
             const fetchedStoriesJSON = [];
             for (let i = 0; i < fetchedStories.length; i++) {
+               
                 story = Story(fetchedStories[i]);
-                summary = await story.methods.getSummary().call();      
+                summary = await story.methods.getSummary().call(); 
+                
+                
+                const controller = new AbortController()
+                // many minutes timeout:
+                const timeoutId = setTimeout(() => controller.abort(), 5000000)
 
                 const response = await fetch("/api/fetchStoryFromIPFS", {
                     method: "POST",   
                     headers: {  
                         "Content-Type": "application/json"  
                     },
-                    body: JSON.stringify({usernameAndPassword: summary[2], pem: summary[3]})
+                    body: JSON.stringify({usernameAndPassword: summary[2], pem: summary[3]}),
+                    signal: controller.signal
                 }); 
 
                 const storyJSON = await response.json();  
+                
 
-                console.log(storyJSON);
                 fetchedStoriesJSON.push(storyJSON);
             }
 
