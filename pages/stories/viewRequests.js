@@ -19,8 +19,7 @@ const ViewRequests = () => {
     async function viewRequests() {
         try {
             const found = await story.methods.getSummary().call();
-            console.log(found);
-            setRequests(found[3]);
+            setRequests(found[1]);
         } catch (error) {
 
             console.error('Error fetching story info:', error);
@@ -43,7 +42,7 @@ const ViewRequests = () => {
     }
 
     const handleRowClick = async (index) => {
-        console.log(index);
+        
         const story = Story(address);
         try {
           const accounts = await web3.eth.getAccounts();

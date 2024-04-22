@@ -33,8 +33,13 @@ const CreateStory = () =>{
         try{      
             
 
+        const controller = new AbortController()
+            // many minutes timeout:
+        const timeoutId = setTimeout(() => controller.abort(), 5000000)
+
         const response = await fetch("../api/createKeyIPFS",{
-            method: "POST"
+            method: "POST",
+            signal: controller.signal
                 });
         const credentials = await response.json();        
         const { usernameAndPassword, pem } = credentials;
@@ -71,16 +76,10 @@ const CreateStory = () =>{
             "reported": false,
             "authors":[accounts[0]],//stores account addresses of authors
             "chapters":[],
-            "previousStoryHashes":[],
             "drafts":[],
             "timestamp":Date.now()
           }
 
-
-
-          const controller = new AbortController()
-                // many minutes timeout:
-          const timeoutId = setTimeout(() => controller.abort(), 5000000)
 
           await fetch("../api/createOrUpdateStoryIPFS",{
             method: "POST",

@@ -24,14 +24,22 @@ const NewChapter = () => {
     try {
       setUploading(true);
 
+
       // Fetch credentials
       const found = await story.methods.getSummary().call(); 
       //upload and pin file to ipfs using pinata
       const formData = new FormData();
+
+      const controller = new AbortController()
+      // many minutes timeout:
+      const timeoutId = setTimeout(() => controller.abort(), 5000000);
+
+
       formData.append("file", fileToUpload, { filename: fileToUpload.name });
       const res = await fetch("../../api/newChapterIPFS", {
         method: "POST",
         body: formData,
+        signal: controller.signal
       });
       const ipfsHash = await res.text();
 
@@ -49,7 +57,8 @@ const NewChapter = () => {
           },
         body: JSON.stringify({usernameAndPassword: found[2],
             pem: found[3],
-            storyJSON: storyJSON})
+            storyJSON: storyJSON}),
+        signal: controller.signal
           });
 
 
