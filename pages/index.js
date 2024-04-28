@@ -1,58 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout';
 import factory from '../ethereum/factory';
-import {Table} from 'react-bootstrap'; 
+import { Table } from 'react-bootstrap'; 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import CreateStory from '../components/createStory';
 import Story from '../ethereum/story';
 import { Link } from '../routes.js'
-import { useGlobalState } from '../context/storyJSONContext.js';
-
 
 const StoryIndex = () => {
-    const [storiesJSON,setStoriesJSON] = useState([]);
-    const [loading, setLoading] = useState(true); 
-    const { storyJSON, setStoryJSON } = useGlobalState();
-    
-
-    const handleAddressClick = (story) => {
-        setStoryJSON(story); // Set the storyJSON state when the address link is clicked
-    };
-
+    const [loading, setLoading] = useState(true);
+    const [stories, setStories] = useState([]);
 
     useEffect(() => {
         async function fetchStories() {
             const fetchedStories = await factory.methods.getDeployedStories().call();
-            let story;
-            let summary;  
-            const fetchedStoriesJSON = [];
-            for (let i = 0; i < fetchedStories.length; i++) {
-               
-                story = Story(fetchedStories[i]);
-                summary = await story.methods.getSummary().call(); 
-                
-                
-                const controller = new AbortController()
-                // many minutes timeout:
-                const timeoutId = setTimeout(() => controller.abort(), 5000000)
-
-                const response = await fetch("/api/fetchStoryFromIPFS", {
-                    method: "POST",   
-                    headers: {  
-                        "Content-Type": "application/json"  
-                    },
-                    body: JSON.stringify({usernameAndPassword: summary[2], pem: summary[3]}),
-                    signal: controller.signal
-                }); 
-
-                const storyJSON = await response.json();  
-                
-
-                fetchedStoriesJSON.push(storyJSON);
-            }
-
-            setStoriesJSON(fetchedStoriesJSON); // Update storiesJSON state
-            setLoading(false); // Set loading to false
+            const storyDetails = await Promise.all(fetchedStories.map(async (address) => {
+                const story = Story(address);
+                const summary = await story.methods.getSummary().call();
+                return {
+                    storyAddress: address,
+                    mainAuthor: summary[0],
+                    title: summary[1],
+                    genre: summary[2],
+                    mainIdea: summary[3],
+                    authors: summary[4].length,
+                    chapters: summary[5].length,
+                    requestsToJoinCount: summary[6],
+                    chapterRequestsCount: summary[7],
+                    reportersCount: summary[8],
+                    reported: summary[9],
+                    balance: summary[10]
+                };
+            }));
+            setStories(storyDetails);
+            setLoading(false);
         }
         fetchStories();
     }, []);
@@ -63,38 +44,35 @@ const StoryIndex = () => {
         } else {
             return (
                 <Table striped bordered hover style={{ marginTop: "10px" }}>
-                <thead>
-                    <tr>
-                        <th>Address</th>
-                        <th>Title</th> 
-                        <th>Genre</th>
-                        <th>Type</th>
-                        <th>Main Idea</th>
-                        <th>Likes</th>
-                        <th>Authors</th>
-                        <th>Reported</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {storiesJSON && storiesJSON.map(story => (
-                        <tr key={story.storyAddress}>
-                            <td>
-                                <Link route={`/stories/${story.storyAddress}/viewStory`}>
-                                    <a onClick={() => handleAddressClick(story)}>{story.storyAddress}</a>
-                                </Link>
-                            </td>
-                            <td>{story.title}</td>
-                            <td>{story.genre}</td>
-                            <td>{story.type}</td>
-                            <td>{story.mainIdea}</td>
-                            <td>{story.likes.length}</td>
-                            <td>{story.authors.length}</td>
-                            <td>{story.reported.toString()}</td>
+                    <thead>
+                        <tr>
+                            <th>Address</th>
+                            <th>Title</th> 
+                            <th>Genre</th>
+                            <th>Main Idea</th>
+                            <th>Authors</th>
+                            <th>Chapters</th>
+                            <th>Reported</th>
                         </tr>
-                    ))}
-                </tbody>
-            </Table>
-            
+                    </thead>
+                    <tbody>
+                        {stories.map(story => (
+                            <tr key={story.storyAddress}>
+                                <td>
+                                    <Link route={`/stories/${story.storyAddress}/viewStory`}>
+                                        <a>{story.storyAddress}</a>
+                                    </Link>
+                                </td>
+                                <td>{story.title}</td>
+                                <td>{story.genre}</td>
+                                <td>{story.mainIdea}</td>
+                                <td>{story.authors}</td>
+                                <td>{story.chapters}</td>
+                                <td>{story.reported.toString()}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </Table>
             );
         }
     };
@@ -111,6 +89,3 @@ const StoryIndex = () => {
 };
 
 export default StoryIndex;
-
-
-

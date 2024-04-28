@@ -6,7 +6,6 @@ import { useRouter } from 'next/router';
 import { Card, Button, Modal, Form, Spinner } from 'react-bootstrap';
 import { Link } from '../../routes.js';
 import Files from '../../components/Files';
-import { useGlobalState } from '../../context/storyJSONContext.js';
 
 const ViewStory = () => {
     const router = useRouter();
@@ -18,34 +17,24 @@ const ViewStory = () => {
 
 
     const [show, setShow] = useState(false);
-    const [storySummary, setStorySummary] = useState({
-        authorsForReact: [],
-        requestsToJoin: [],
-        usernameAndPassword: "",
-        pem: ""
-    });
-
-    const { storyJSON, setStoryJSON } = useGlobalState();
-
-    const [counter, setCounter] = useState(0);
-    const [requestProposal, setRequestProposal] = useState("");
-    const [loadingLike, setLoadingLike] = useState(false);
+    const [storySummary, setStorySummary] = useState(null);
     const [isAuthor, setIsAuthor] = useState(false);
-    const [chapterCid, setChapterCid] = useState('');
-    const [loadingReport, setLoadingReport] = useState(false);
-    const [loadingCreateRequest, setLoadingCreateRequest] = useState(false);
+    const [counter, setCounter] = useState(0);
     
 
     async function fetchStoryInfo() {
         try {
             const found = await story.methods.getSummary().call();
+            console.log(found);
 
+            /*
             setStorySummary({
                 authorsForReact: found[0],
                 requestsToJoin: found[1], 
                 usernameAndPassword: found[2],
                 pem: found[3]
             });
+            */
 
         } catch (error) {
             console.error('Error fetching story info:', error);
@@ -63,48 +52,7 @@ const ViewStory = () => {
     const handleClose = () => setShow(false);
     const handleShow = () => setShow(true);
 
-    const handleCreateRequest = async (event) => {
-        event.preventDefault();
-        setLoadingCreateRequest(true);
-        try {
-            const accounts = await web3.eth.getAccounts();
-            const gasEstimate = await story.methods.createRequestToJoin(requestProposal).estimateGas({
-                from: accounts[0]
-            });
-    
-            const encode = await story.methods.createRequestToJoin(requestProposal).encodeABI();
-    
-            await story.methods.createRequestToJoin(requestProposal).send({
-                from: accounts[0],
-                gas: gasEstimate.toString(),
-                data: encode
-            });
-
-            setRequestProposal("");
-    
-        } catch (error) {
-            console.error('Error creating request:', error);
-        }
-        setLoadingCreateRequest(false);
-    };
-
-    
-    function interpretTimestamp(foundTimestamp){
-        // Convert the Unix timestamp to milliseconds (Unix timestamps are in seconds)
-        const milliseconds = Number(foundTimestamp) * 1000;
-        // Create a new Date object with the converted milliseconds
-        const date = new Date(milliseconds);
-        // Use the Date object's methods to get the desired date and time components
-        const year = date.getFullYear();
-        const month = date.getMonth() + 1; // Month index starts from 0, so add 1
-        const day = date.getDate();
-        // Construct the formatted date string in "dd/mm/yy" format
-        const formattedDate = `${day}/${month}/${year.toString().slice(-2)}`;
-        return formattedDate;
-    }
-
-    
-
+    /*
     const incrementCounter = () => {
         if (counter < storyJSON.chapters.length - 1) {
             setCounter(prevCounter => prevCounter + 1);
@@ -122,14 +70,12 @@ const ViewStory = () => {
         }
         fetchChapter(counter);
     };
+    */
 
-    const handleProposalChange = (event) => {
-        setRequestProposal(event.target.value);
-    };
-
+    /*
     const handleLike = async (event) => {
+        
         event.preventDefault();
-        setLoadingLike(true);
         try{
             //get the account address that wants to like the story
             const fetchedAccount = (await web3.eth.getAccounts())[0];
@@ -163,16 +109,18 @@ const ViewStory = () => {
                     });
             }
             
+            
 
 
         }catch(error) {
             console.error('Error liking the story:', error);
         }
+        
 
-        setLoadingLike(false);
+    } 
+    */   
 
-    }    
-
+    /*
     const handleReport = async (event) => {
         event.preventDefault();
         setLoadingReport(true);
@@ -224,8 +172,10 @@ const ViewStory = () => {
         setLoadingReport(false);
 
     }    
+    */
 
 
+    /*
     const fetchChapter = async (counter) => {
         let chapterCidFetched
         if(storyJSON.chapters.length > 0){
@@ -240,6 +190,7 @@ const ViewStory = () => {
             }
        }
     };
+    */
 
 
 
