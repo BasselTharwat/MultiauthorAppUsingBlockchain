@@ -4,10 +4,11 @@ import Story from '../../ethereum/story';
 import Chapter from '../../ethereum/chapter.js'
 import web3 from '../../ethereum/web3';
 import { useRouter } from 'next/router';
-import { Card, Button, Modal, Form, Spinner } from 'react-bootstrap';
+import { Card, Button, Modal, Form, Spinner, Row, Col } from 'react-bootstrap';
 import { Link } from '../../routes.js';
 import Files from '../../components/Files';
-import chapter from '../../ethereum/chapter.js';
+import 'bootstrap-icons/font/bootstrap-icons.css';
+
 
 const ViewStory = () => {
     const router = useRouter();
@@ -45,6 +46,10 @@ const ViewStory = () => {
     const [loadingCreateRequest, setLoadingCreateRequest] = useState(false);
     const [loadingLike, setLoadingLike] = useState(false);
     const [loadingReport, setLoadingReport] = useState(false);
+    const [contributionAmount, setContributionAmount] = useState(0);
+    const [loadingContribute, setLoadingContribute] = useState(false);
+    const [loadingDispense, setLoadingDispense] = useState(false);
+
 
     const handleProposalChange = (event) => {
         setRequestProposal(event.target.value);
@@ -79,7 +84,6 @@ const ViewStory = () => {
     async function fetchStoryInfo() {
         try {
             const found = await story.methods.getSummary().call();
-            console.log(found);
 
             
             setStorySummary({
@@ -98,6 +102,8 @@ const ViewStory = () => {
             if(found[5].length>0){
                 setCurrentChapter(found[5][0]);
             }
+
+            fetchChapter(found[5][0]);
             
 
         } catch (error) {
@@ -124,7 +130,7 @@ const ViewStory = () => {
             if(address){
                 const chapter = Chapter(address);
                 const found = await chapter.methods.getSummary().call();
-                console.log(found);
+                
 
                 setChapterSummary({
                     story: found[0],
@@ -193,40 +199,7 @@ const ViewStory = () => {
         }
     };
 
-    
-    const fetchFirstChapter = async () => {
-        try{
-            
-            const chapterAddress = storySummary.chapters[0];
-            fetchChapter(chapterAddress);
-
-            //fetch sister chapters from the linked parent chapters of the child chapter
-            //hanshoof 
-            
-
-        }catch (error) {
-            console.error('Error fetching chapter info:', error);
-        }
-        
-
-    }
-
-
-    
-
-    
-
-
-
-
-    useEffect(() => {
-        isAuthorCall();
-        fetchStoryInfo();
-        fetchFirstChapter();
-
-    }, []);
-
-
+   
     
     const handleLike = async (event) => {
         event.preventDefault();
@@ -277,27 +250,140 @@ const ViewStory = () => {
         
 
     } 
+
+    const handleContribute = async (event) => {
+        event.preventDefault();
+        setLoadingContribute(true);
+        try {
+            const accounts = await web3.eth.getAccounts();
+            const gasEstimate = await story.methods.contribute().estimateGas({
+                from: accounts[0],
+                value: web3.utils.toWei(contributionAmount, 'ether')
+            });
+            const encode = await story.methods.contribute().encodeABI();
+    
+            await story.methods.contribute().send({
+                from: accounts[0],
+                value: web3.utils.toWei(contributionAmount, 'ether'),
+                gas: gasEstimate.toString(),
+                data: encode
+            });
+
+        }catch(error) {
+            console.error('Error contributing to the story:', error);
+        }
+        setContributionAmount(0);
+        setLoadingContribute(false);
+    };
+
+    const handleDispenseRewards = async (event) => {
+        event.preventDefault();
+        setLoadingDispense(true);
+        try {
+            const accounts = await web3.eth.getAccounts();
+            const gasEstimate = await story.methods.dispenseRewards().estimateGas({
+                from: accounts[0]
+            });
+            const encode = await story.methods.dispenseRewards().encodeABI();
+    
+            await story.methods.dispenseRewards().send({
+                from: accounts[0],
+                gas: gasEstimate.toString(),
+                data: encode
+            });
+
+        }catch(error) {
+            console.error('Error dispensing the rewards:', error);
+        }
+        setLoadingDispense(false);
+        
+    };
        
+  
+
+
+
+
+    useEffect(() => {
+        isAuthorCall();
+        fetchStoryInfo();
+
+    }, []);
+
+
     return(
         <Layout  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         
             <Card style={{ width: '50rem', marginBottom: '10px', textAlign: 'center' }}>
                 <Card.Body>
-                    <Card.Title>{"Chapter hanshoof kam"}</Card.Title>
+                    <Card.Title>{"Chapter: "+ currentChapter}</Card.Title>
                     <Card.Text style={{ overflowWrap: 'break-word', wordWrap: 'break-word' }}>
                     {chapterSummary && chapterSummary.ipfsHash && ( 
                         <Files chapterCid={chapterSummary.ipfsHash} /> 
                     )} 
                     </Card.Text>  
-                    <Card.Footer style={{marginBottom: '10px', overflowWrap: 'break-word', wordWrap: 'break-word' }}>
+                    <Button variant="primary" onClick={fetchParentChapters} className="mr-2 mb-2">
+                        <i className="bi bi-arrow-up"></i> 
+                    </Button>
+                    <br></br>
+                    <Button variant="primary" onClick={() => fetchSisterChapter(1)} className="mr-2 mb-2" style={{marginRight: "10px"}}>
+                        <i className="bi bi-arrow-left"></i> 
+                    </Button>
+                    <Button variant="primary" onClick={() => fetchSisterChapter(0)} className="mr-2 mb-2">
+                        <i className="bi bi-arrow-right"></i> 
+                    </Button>
+                    <br></br>
+                    <Button variant="primary" onClick={fetchChildChapters} className="mb-2">
+                        <i className="bi bi-arrow-down"></i> 
+                    </Button>
+                </Card.Body>
+                <Card.Footer style={{marginBottom: '10px', overflowWrap: 'break-word', wordWrap: 'break-word' }}>
                         {"Meet the authors : " + storySummary.authors}
                     </Card.Footer>
-                    <Button variant="primary" onClick={() => fetchSisterChapter(1)} style={{marginRight: "10px"}}>Next Chapter</Button>
-                    <Button variant="primary" onClick={() => fetchSisterChapter(0)}>Previous Chapter</Button>
-                </Card.Body>
             </Card>
             <>
-                <Button variant="secondary" onClick={handleShow} style={{marginRight: "10px"}}>
+                <Row className="mb-3">
+                <Col xs="auto">
+                    <Button variant='success' disabled={loadingLike} onClick={handleLike} style={{marginRight: "10px"}}>
+                    {loadingLike ?
+                            <Spinner
+                            as="span"
+                            animation="border"
+                            size="sm"
+                            role="status"
+                            aria-hidden="true"
+                            /> :
+                            "Like Chapter"
+                        }
+                    </Button>
+                </Col>
+                <Col xs="auto">
+                    <Button variant="primary" onClick={handleContribute}>
+                    {loadingContribute ?
+                            <Spinner
+                            as="span"
+                            animation="border"
+                            size="sm"
+                            role="status"
+                            aria-hidden="true"
+                            /> :
+                            "Contribute to Story"
+                        }
+                    </Button>
+                </Col>
+                <Col xs="auto">
+                    <Form.Group controlId="contributionAmount">
+                        <Form.Control
+                            type="number"
+                            placeholder="Enter amount in Ether"
+                            value={contributionAmount}
+                            onChange={(e) => setContributionAmount(e.target.value)}
+                        />
+                    </Form.Group>
+                </Col>
+                </Row>
+                <br></br>
+                <Button variant="primary" onClick={handleShow} style={{marginTop: "10px" , marginRight: "10px"}}>
                     Create a request to join
                 </Button>
                 <br></br>
@@ -316,9 +402,8 @@ const ViewStory = () => {
                     {"View Chapter Requests (Only for authors)"}
                     </Button>
                 </Link>
-                <br></br>
-                <Button variant='success' disabled={loadingLike} onClick={handleLike} style={{marginTop: "10px", marginRight: "10px"}}>
-                {loadingLike ?
+                <Button variant="secondary" disabled={!isAuthor} onClick={handleDispenseRewards} style={{marginTop: "10px", marginRight: "10px"}}>
+                {loadingDispense ?
                         <Spinner
                         as="span"
                         animation="border"
@@ -326,9 +411,10 @@ const ViewStory = () => {
                         role="status"
                         aria-hidden="true"
                         /> :
-                        "Like"
+                        "Dispense Rewards"
                     }
                 </Button>
+                <br></br>
                 
                 <Button variant='danger' disabled={loadingReport} onClick={handleReport} style={{marginTop: "10px", marginRight: "10px"}}>
                 {loadingReport ?
@@ -339,7 +425,7 @@ const ViewStory = () => {
                         role="status"
                         aria-hidden="true"
                         /> :
-                        "Report"
+                        "Report Story"
                     }
                 </Button>
                 
