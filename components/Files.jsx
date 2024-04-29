@@ -1,3 +1,4 @@
+/*
 import React from "react";
 require('dotenv').config({path: '../.env'});
 
@@ -19,5 +20,26 @@ export default function Files(props) {
         View file
       </a>
     </div>
+  );
+}
+*/
+
+import React from "react";
+require('dotenv').config({path: '../.env'});
+
+const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL
+  ? process.env.NEXT_PUBLIC_GATEWAY_URL
+  : "https://gateway.pinata.cloud";
+
+
+export default function Files(props) {
+  return (
+      <a
+        href={`${GATEWAY_URL}/ipfs/${props.chapterCid}?pinataGatewayToken=${process.env.NEXT_PUBLIC_GATEWAY_TOKEN}`}
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        {props.chapterCid}
+      </a>
   );
 }

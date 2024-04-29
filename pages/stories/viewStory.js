@@ -300,14 +300,20 @@ const ViewStory = () => {
                 <Button variant="secondary" onClick={handleShow} style={{marginRight: "10px"}}>
                     Create a request to join
                 </Button>
+                <br></br>
                 <Link route={`/stories/${address}/viewRequestsToJoin`}>
-                    <Button variant='secondary' disabled={!isAuthor} style={{marginRight: "10px"}}>
+                    <Button variant='secondary' disabled={!isAuthor} style={{marginTop: "10px", marginRight: "10px"}}>
                     {"View Requests To Join (Only for authors)"}
                     </Button>
                 </Link>
                 <Link route={`/stories/${address}/newChapterRequest`}>
-                    <Button variant='secondary' disabled={!isAuthor} style={{marginRight: "10px"}}>
+                    <Button variant='secondary' disabled={!isAuthor} style={{marginTop: "10px", marginRight: "10px"}}>
                     {"New Chapter Request (Only for authors)"}
+                    </Button>
+                </Link>
+                <Link route={`/stories/${address}/viewChapterRequests`}>
+                    <Button variant='secondary' disabled={!isAuthor} style={{marginTop: "10px", marginRight: "10px"}}>
+                    {"View Chapter Requests (Only for authors)"}
                     </Button>
                 </Link>
                 <br></br>
