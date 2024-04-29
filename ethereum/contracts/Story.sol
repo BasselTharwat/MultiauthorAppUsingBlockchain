@@ -52,7 +52,7 @@ contract Story {
         bool status;
     }
 
-    RequestToJoin[] requestsToJoin;
+    RequestToJoin[] public requestsToJoin;
 
     struct ChapterRequest {
         string ipfsHash;
@@ -65,7 +65,7 @@ contract Story {
         bool status;
     }
 
-    ChapterRequest[] chapterRequests;
+    ChapterRequest[] public chapterRequests;
 
     constructor(address _mainAuthor, string memory _title, string memory _genre, string memory _mainIdea) {
         mainAuthor = _mainAuthor;

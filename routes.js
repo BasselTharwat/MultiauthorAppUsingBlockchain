@@ -3,8 +3,8 @@ const routes = require('next-routes')();
 
 routes
     .add('/stories/:address/viewStory', 'stories/viewStory')
-    .add('/stories/:address/viewRequests', 'stories/viewRequests')
-    .add('/stories/:address/newChapter', 'stories/newChapter')
+    .add('/stories/:address/viewRequestsToJoin', 'stories/viewRequestsToJoin')
+    .add('/stories/:address/newChapterRequest', 'stories/newChapterRequest')
 
 
 module.exports = routes;  

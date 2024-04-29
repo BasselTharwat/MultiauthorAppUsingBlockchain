@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../../components/layout';
 import Story from '../../ethereum/story';
+import Chapter from '../../ethereum/chapter.js'
 import web3 from '../../ethereum/web3';
 import { useRouter } from 'next/router';
 import { Card, Button, Modal, Form, Spinner } from 'react-bootstrap';
 import { Link } from '../../routes.js';
 import Files from '../../components/Files';
+import chapter from '../../ethereum/chapter.js';
 
 const ViewStory = () => {
     const router = useRouter();
@@ -17,24 +19,86 @@ const ViewStory = () => {
 
 
     const [show, setShow] = useState(false);
-    const [storySummary, setStorySummary] = useState(null);
+    const [storySummary, setStorySummary] = useState({mainAuthor: "",
+                                                    title: "",
+                                                    genre: "",
+                                                    mainIdea: "",
+                                                    authors: [],
+                                                    chapters: [],
+                                                    requestsToJoin: 0,
+                                                    chapterRequests: 0,
+                                                    reportersCount: 0,
+                                                    reported: false,
+                                                    balance: 0});
+
+    const [chapterSummary, setChapterSummary] = useState({story: "",
+                                                    author: "",
+                                                    ipfsHash: "",
+                                                    linkedParentChapters: [],
+                                                    linkedChildChapters: [],
+                                                    likeCount: 0});
+
     const [isAuthor, setIsAuthor] = useState(false);
-    const [counter, setCounter] = useState(0);
+    const [currentChapter, setCurrentChapter] = useState("");
+    const [sisterChapters, setSisterChapters] = useState([]);
+    const [requestProposal, setRequestProposal] = useState("");
+    const [loadingCreateRequest, setLoadingCreateRequest] = useState(false);
+    const [loadingLike, setLoadingLike] = useState(false);
+    const [loadingReport, setLoadingReport] = useState(false);
+
+    const handleProposalChange = (event) => {
+        setRequestProposal(event.target.value);
+    };
+
+    const handleCreateRequest = async (event) => {
+        event.preventDefault();
+        setLoadingCreateRequest(true);
+        try {
+            const accounts = await web3.eth.getAccounts();
+            const gasEstimate = await story.methods.createRequestToJoin(requestProposal).estimateGas({
+                from: accounts[0]
+            });
     
+            const encode = await story.methods.createRequestToJoin(requestProposal).encodeABI();
+    
+            await story.methods.createRequestToJoin(requestProposal).send({
+                from: accounts[0],
+                gas: gasEstimate.toString(),
+                data: encode
+            });
+
+            setRequestProposal("");
+    
+        } catch (error) {
+            console.error('Error creating request:', error);
+        }
+        setLoadingCreateRequest(false);
+    };
+
 
     async function fetchStoryInfo() {
         try {
             const found = await story.methods.getSummary().call();
             console.log(found);
 
-            /*
+            
             setStorySummary({
-                authorsForReact: found[0],
-                requestsToJoin: found[1], 
-                usernameAndPassword: found[2],
-                pem: found[3]
+                mainAuthor: found[0],
+                title: found[1],
+                genre: found[2],
+                mainIdea: found[3],
+                authors: found[4],
+                chapters: found[5],
+                requestsToJoin: Number(found[6]),
+                reportersCount: Number(found[7]),
+                reported: found[8],
+                balance: Number(found[9])
             });
-            */
+
+            if(found[5].length>0){
+                setCurrentChapter(found[5][0]);
+            }
+            
 
         } catch (error) {
             console.error('Error fetching story info:', error);
@@ -52,145 +116,105 @@ const ViewStory = () => {
     const handleClose = () => setShow(false);
     const handleShow = () => setShow(true);
 
-    /*
-    const incrementCounter = () => {
-        if (counter < storyJSON.chapters.length - 1) {
-            setCounter(prevCounter => prevCounter + 1);
-        } else {
-            setCounter(0);
-        }
-        fetchChapter(counter);
-    };
 
-    const decrementCounter = () => {
-        if (counter > 0) {
-            setCounter(prevCounter => prevCounter - 1);
-        } else {
-            setCounter(storyJSON.chapters.length - 1);
-        }
-        fetchChapter(counter);
-    };
-    */
-
-    /*
-    const handleLike = async (event) => {
-        
-        event.preventDefault();
+    
+    
+    const fetchChapter = async (address) => {
         try{
-            //get the account address that wants to like the story
-            const fetchedAccount = (await web3.eth.getAccounts())[0];
-            
-            //convert the array of likers' accounts to a set to speed up the search process
-            const likersSet = new Set(storyJSON.likes);
-            
-            //we want to make sure the same user can't like the story more than once
-            if (likersSet.has(fetchedAccount)) {
-                console.log("Account liked the story before.");
-            } else {
-                
-                //update the json
-                const updatedStoryJSON = storyJSON.likes.push(fetchedAccount);
-                setStoryJSON(updatedStoryJSON);
-                
-                const controller = new AbortController()
-                // many minutes timeout:
-                const timeoutId = setTimeout(() => controller.abort(), 5000000)
+            if(address){
+                const chapter = Chapter(address);
+                const found = await chapter.methods.getSummary().call();
+                console.log(found);
 
-                //update the json on the ipfs
-                await fetch("../../api/createOrUpdateStoryIPFS",{
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({usernameAndPassword: storySummary.usernameAndPassword,
-                        pem: storySummary.pem,
-                        storyJSON: storyJSON,
-                        signal: controller.signal})
-                    });
-            }
-            
-            
-
-
-        }catch(error) {
-            console.error('Error liking the story:', error);
-        }
-        
-
-    } 
-    */   
-
-    /*
-    const handleReport = async (event) => {
-        event.preventDefault();
-        setLoadingReport(true);
-        try{
-            //get the account address that wants to like the story
-            const fetchedAccount = (await web3.eth.getAccounts())[0];
-            
-            //convert the array of likers' accounts to a set to speed up the search process
-            const reportersSet = new Set(storyJSON.reports);
-            
-            //we want to make sure the same user can't like the story more than once
-            if (reportersSet.has(fetchedAccount)) {
-                console.log("Account reported the story before.");
-            } else {
-                
-            //update the json
-            let updatedStoryJSON = storyJSON.reports.push(fetchedAccount);
-            
-
-            if(storyJSON.reports.length > 2){ //arbitrary number
-                storyJSON.reported = true;
-                updatedStoryJSON = storyJSON;
-            } 
-
-            setStoryJSON(updatedStoryJSON);
-            
-
-            const controller = new AbortController()
-            // many minutes timeout:
-            const timeoutId = setTimeout(() => controller.abort(), 5000000)
-            //update the json on the ipfs
-            await fetch("../../api/createOrUpdateStoryIPFS",{
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({usernameAndPassword: storySummary.usernameAndPassword,
-                    pem: storySummary.pem,
-                    storyJSON: storyJSON}),
-                signal: controller.signal
+                setChapterSummary({
+                    story: found[0],
+                    author: found[1],
+                    ipfsHash: found[2],
+                    linkedParentChapters: found[3],
+                    linkedChildChapters: found[4],
+                    likeCount: Number(found[5])
                 });
+
+                setCurrentChapter(address);
+
             }
 
-
-        }catch(error) {
-            console.error('Error reporting the story:', error);
+        }catch (error) {
+            console.error('Error fetching chapter info:', error);
         }
-
-        setLoadingReport(false);
-
-    }    
-    */
-
-
-    /*
-    const fetchChapter = async (counter) => {
-        let chapterCidFetched
-        if(storyJSON.chapters.length > 0){
-            if(counter){
-                chapterCidFetched = storyJSON.chapters[counter].cid;
-            }
-            else{ 
-                chapterCidFetched = storyJSON.chapters[0].cid;
-            }
-            if(chapterCidFetched){
-                setChapterCid(chapterCidFetched);
-            }
-       }
+        
     };
-    */
+
+    const fetchChildChapters = async () => {
+        try{
+            
+            setSisterChapters(chapterSummary.linkedChildChapters);
+            const chapterAddress = chapterSummary.linkedChildChapters[0];
+            fetchChapter(chapterAddress);
+
+        }catch (error) {
+            console.error('Error fetching chapter info:', error);
+        }
+        
+
+    }
+
+    const fetchParentChapters = async () => {
+        try{
+            
+            setSisterChapters(chapterSummary.linkedParentChapters);
+            const chapterAddress = chapterSummary.linkedParentChapters[0];
+            fetchChapter(chapterAddress);
+
+        }catch (error) {
+            console.error('Error fetching chapter info:', error);
+        }
+        
+
+    }
+
+    const fetchSisterChapter = async (direction) => { //direction is a number. 1 represents next. 0 represents previous.
+        try {
+            let newIndex;
+            const currentIndex = sisterChapters.indexOf(currentChapter);
+
+            if (direction === 1) { // Fetch next sister chapter
+                newIndex = currentIndex === sisterChapters.length - 1 ? 0 : currentIndex + 1;
+            } else if (direction === 0) { // Fetch previous sister chapter
+                newIndex = currentIndex === 0 ? sisterChapters.length - 1 : currentIndex - 1;
+            } else {
+                console.error('Invalid direction. Please provide 1 for next chapter or 0 for previous chapter.');
+                return;
+            }
+            const newChapterAddress = sisterChapters[newIndex];
+            await fetchChapter(newChapterAddress);
+        } catch (error) {
+            console.error('Error fetching sister chapter info:', error);
+        }
+    };
+
+    
+    const fetchFirstChapter = async () => {
+        try{
+            
+            const chapterAddress = storySummary.chapters[0];
+            fetchChapter(chapterAddress);
+
+            //fetch sister chapters from the linked parent chapters of the child chapter
+            //hanshoof 
+            
+
+        }catch (error) {
+            console.error('Error fetching chapter info:', error);
+        }
+        
+
+    }
+
+
+    
+
+    
 
 
 
@@ -198,44 +222,92 @@ const ViewStory = () => {
     useEffect(() => {
         isAuthorCall();
         fetchStoryInfo();
-        fetchChapter(counter);
+        fetchFirstChapter();
 
     }, []);
 
 
+    
+    const handleLike = async (event) => {
+        event.preventDefault();
+        setLoadingLike(true);
+        try {
+            const chapter = Chapter(currentChapter);
+            const accounts = await web3.eth.getAccounts();
+            const gasEstimate = await chapter.methods.like().estimateGas({
+                from: accounts[0]
+            });
+            const encode = await chapter.methods.like().encodeABI();
+    
+            await chapter.methods.like().send({
+                from: accounts[0],
+                gas: gasEstimate.toString(),
+                data: encode
+            });
+
+        }catch(error) {
+            console.error('Error liking the chapter:', error);
+        }
+
+        setLoadingLike(false);
+        
+
+    } 
+
+    const handleReport = async (event) => {
+        event.preventDefault();
+        setLoadingReport(true);
+        try {
+            const accounts = await web3.eth.getAccounts();
+            const gasEstimate = await story.methods.report().estimateGas({
+                from: accounts[0]
+            });
+            const encode = await story.methods.report().encodeABI();
+    
+            await story.methods.report().send({
+                from: accounts[0],
+                gas: gasEstimate.toString(),
+                data: encode
+            });
+
+        }catch(error) {
+            console.error('Error reporting the story:', error);
+        }
+        setLoadingReport(false);
+        
+
+    } 
+       
     return(
         <Layout  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        
             <Card style={{ width: '50rem', marginBottom: '10px', textAlign: 'center' }}>
                 <Card.Body>
-                    <Card.Title>{"Chapter "+ (counter+1)}</Card.Title>
+                    <Card.Title>{"Chapter hanshoof kam"}</Card.Title>
                     <Card.Text style={{ overflowWrap: 'break-word', wordWrap: 'break-word' }}>
-                    {chapterCid && ( 
-                        <Files chapterCid={chapterCid} /> 
+                    {chapterSummary && chapterSummary.ipfsHash && ( 
+                        <Files chapterCid={chapterSummary.ipfsHash} /> 
                     )} 
-                    </Card.Text>
-                    {/**
-                    {counter && storyJSON.chapters[counter] &&
-                        (<Card.Text>{"Created at "+ interpretTimestamp(storyJSON.chapters[counter].timestamp)}</Card.Text>)}
-                    */}    
+                    </Card.Text>  
                     <Card.Footer style={{marginBottom: '10px', overflowWrap: 'break-word', wordWrap: 'break-word' }}>
-                        {"Meet the authors : " + storySummary.authorsForReact}
+                        {"Meet the authors : " + storySummary.authors}
                     </Card.Footer>
-                    <Button variant="primary" onClick={incrementCounter} style={{marginRight: "10px"}}>Next Chapter</Button>
-                    <Button variant="primary" onClick={decrementCounter}>Previous Chapter</Button>
+                    <Button variant="primary" onClick={() => fetchSisterChapter(1)} style={{marginRight: "10px"}}>Next Chapter</Button>
+                    <Button variant="primary" onClick={() => fetchSisterChapter(0)}>Previous Chapter</Button>
                 </Card.Body>
             </Card>
             <>
                 <Button variant="secondary" onClick={handleShow} style={{marginRight: "10px"}}>
                     Create a request to join
                 </Button>
-                <Link route={`/stories/${address}/viewRequests`}>
+                <Link route={`/stories/${address}/viewRequestsToJoin`}>
                     <Button variant='secondary' disabled={!isAuthor} style={{marginRight: "10px"}}>
-                    {"View Requests (Only for authors)"}
+                    {"View Requests To Join (Only for authors)"}
                     </Button>
                 </Link>
-                <Link route={`/stories/${address}/newChapter`}>
+                <Link route={`/stories/${address}/newChapterRequest`}>
                     <Button variant='secondary' disabled={!isAuthor} style={{marginRight: "10px"}}>
-                    {"New Chapter (Only for authors)"}
+                    {"New Chapter Request (Only for authors)"}
                     </Button>
                 </Link>
                 <br></br>
@@ -251,6 +323,7 @@ const ViewStory = () => {
                         "Like"
                     }
                 </Button>
+                
                 <Button variant='danger' disabled={loadingReport} onClick={handleReport} style={{marginTop: "10px", marginRight: "10px"}}>
                 {loadingReport ?
                         <Spinner
@@ -263,8 +336,10 @@ const ViewStory = () => {
                         "Report"
                     }
                 </Button>
+                
 
 
+                
                 <Modal show={show} onHide={handleClose}>
                     <Modal.Header closeButton>
                         <Modal.Title>Write your proposal here to join the authors</Modal.Title>
@@ -294,7 +369,9 @@ const ViewStory = () => {
                         </Button>
                     </Modal.Footer>
                 </Modal>
-            </>             
+                
+            </>
+                       
         </Layout>
     );
 };
