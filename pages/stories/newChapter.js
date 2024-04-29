@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import web3 from '../../ethereum/web3.js';
 import { Button, Spinner, Form } from 'react-bootstrap';
 
-const NewChapterRequest = () => {
+const NewChapter = () => {
   const router = useRouter();
   const { asPath } = router;
   const segments = asPath.split('/'); 
@@ -16,6 +16,7 @@ const NewChapterRequest = () => {
   const [file, setFile] = useState("");
   const [parentChapter, setParentChapter] = useState("0x0000000000000000000000000000000000000000");
   const [childChapter, setChildChapter] = useState("0x0000000000000000000000000000000000000000");
+  const [chapterTitle, setChapterTitle] = useState(""); 
   const [uploading, setUploading] = useState(false);
 
   const uploadFile = async (fileToUpload) => {
@@ -34,12 +35,12 @@ const NewChapterRequest = () => {
       const ipfsHash = await res.text();
       
       const accounts = await web3.eth.getAccounts();
-      const gasEstimate = await story.methods.createChapterRequest(ipfsHash, parentChapter, childChapter).estimateGas({
+      const gasEstimate = await story.methods.createChapter(title, ipfsHash, parentChapter, childChapter).estimateGas({
         from: accounts[0]
       });
-      const encode = await story.methods.createChapterRequest(ipfsHash, parentChapter, childChapter).encodeABI();
+      const encode = await story.methods.createChapter(title, ipfsHash, parentChapter, childChapter).encodeABI();
 
-      await story.methods.createChapterRequest(ipfsHash, parentChapter, childChapter).send({
+      await story.methods.createChapter(title, ipfsHash, parentChapter, childChapter).send({
         from: accounts[0],
         gas: gasEstimate.toString(),
         data: encode
@@ -47,6 +48,7 @@ const NewChapterRequest = () => {
       
 
       setUploading(false);
+      window.location.href = 'http://localhost:3000';
 
     } catch (e) {
       console.log(e);
@@ -75,6 +77,15 @@ const NewChapterRequest = () => {
       <br></br>
 
       <div>
+        <Form.Group>
+          <Form.Label>Enter Chapter Title</Form.Label>
+          <Form.Control 
+            type="text" 
+            placeholder="Enter the chapter title" 
+            value={chapterTitle} 
+            onChange={(e) => setChapterTitle(e.target.value)} 
+          />
+        </Form.Group>
         <Form.Group>
           <Form.Label>Parent Chapter (You must enter a parent chapter that belongs to the same story. If there is no parent chapter, leave it blank)</Form.Label>
           <Form.Control 
@@ -132,4 +143,4 @@ const NewChapterRequest = () => {
   );
 };
 
-export default NewChapterRequest;
+export default NewChapter;

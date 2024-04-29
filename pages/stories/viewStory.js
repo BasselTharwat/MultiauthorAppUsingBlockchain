@@ -34,6 +34,7 @@ const ViewStory = () => {
 
     const [chapterSummary, setChapterSummary] = useState({story: "",
                                                     author: "",
+                                                    title: "",
                                                     ipfsHash: "",
                                                     linkedParentChapters: [],
                                                     linkedChildChapters: [],
@@ -49,6 +50,14 @@ const ViewStory = () => {
     const [contributionAmount, setContributionAmount] = useState(0);
     const [loadingContribute, setLoadingContribute] = useState(false);
     const [loadingDispense, setLoadingDispense] = useState(false);
+
+    //fix these
+    const [hasParentChapters, setHasParentChapters] = useState(true);
+    const [hasChildChapters, setHasChildChapters] = useState(true);
+    const [hasSisterChapters1, setHasSisterChapters1] = useState(true);
+    const [hasSisterChapters2, setHasSisterChapters2] = useState(true);
+
+
 
 
     const handleProposalChange = (event) => {
@@ -135,14 +144,16 @@ const ViewStory = () => {
                 setChapterSummary({
                     story: found[0],
                     author: found[1],
-                    ipfsHash: found[2],
-                    linkedParentChapters: found[3],
-                    linkedChildChapters: found[4],
-                    likeCount: Number(found[5])
+                    title: found[2],
+                    ipfsHash: found[3],
+                    linkedParentChapters: found[4],
+                    linkedChildChapters: found[5],
+                    likeCount: Number(found[6])
                 });
 
+                
                 setCurrentChapter(address);
-
+                
             }
 
         }catch (error) {
@@ -153,7 +164,6 @@ const ViewStory = () => {
 
     const fetchChildChapters = async () => {
         try{
-            
             setSisterChapters(chapterSummary.linkedChildChapters);
             const chapterAddress = chapterSummary.linkedChildChapters[0];
             fetchChapter(chapterAddress);
@@ -167,7 +177,6 @@ const ViewStory = () => {
 
     const fetchParentChapters = async () => {
         try{
-            
             setSisterChapters(chapterSummary.linkedParentChapters);
             const chapterAddress = chapterSummary.linkedParentChapters[0];
             fetchChapter(chapterAddress);
@@ -185,19 +194,58 @@ const ViewStory = () => {
             const currentIndex = sisterChapters.indexOf(currentChapter);
 
             if (direction === 1) { // Fetch next sister chapter
-                newIndex = currentIndex === sisterChapters.length - 1 ? 0 : currentIndex + 1;
+                newIndex = currentIndex === sisterChapters.length - 1 ? currentIndex : currentIndex + 1;
             } else if (direction === 0) { // Fetch previous sister chapter
-                newIndex = currentIndex === 0 ? sisterChapters.length - 1 : currentIndex - 1;
+                newIndex = currentIndex === 0 ? 0 : currentIndex - 1;
             } else {
                 console.error('Invalid direction. Please provide 1 for next chapter or 0 for previous chapter.');
                 return;
             }
             const newChapterAddress = sisterChapters[newIndex];
-            await fetchChapter(newChapterAddress);
+            fetchChapter(newChapterAddress);
         } catch (error) {
             console.error('Error fetching sister chapter info:', error);
         }
     };
+
+    /*
+    const checkDirections = (found) => {
+        if(found[4].length === 0){
+            setHasChildChapters(false);
+        }
+        else{
+            setHasChildChapters(true);
+        }
+        if(found[3].length === 0){
+            setHasParentChapters(false);
+        }
+        else{
+            setHasParentChapters(true);
+        }
+        const currentIndex = sisterChapters.indexOf(currentChapter);
+        console.log(currentIndex);
+        if(currentIndex < sisterChapters.length && currentIndex > 0){
+            setHasSisterChapters1(true);
+            setHasSisterChapters2(true);
+        }else{
+            if(currentIndex === 0){
+                setHasSisterChapters1(true);
+                setHasSisterChapters2(false);
+            }else{
+                if(currentIndex === sisterChapters.length){
+                    setHasSisterChapters1(false);
+                    setHasSisterChapters2(true);
+                }
+                else{
+                    setHasSisterChapters1(false);
+                    setHasSisterChapters2(false);
+                }
+            }
+        }
+
+
+    }
+    */
 
    
     
@@ -322,18 +370,18 @@ const ViewStory = () => {
                         <Files chapterCid={chapterSummary.ipfsHash} /> 
                     )} 
                     </Card.Text>  
-                    <Button variant="primary" onClick={fetchParentChapters} className="mr-2 mb-2">
+                    <Button variant="primary" disabled={!hasParentChapters} onClick={fetchParentChapters} className="mr-2 mb-2">
                         <i className="bi bi-arrow-up"></i> 
                     </Button>
                     <br></br>
-                    <Button variant="primary" onClick={() => fetchSisterChapter(1)} className="mr-2 mb-2" style={{marginRight: "10px"}}>
+                    <Button variant="primary" disabled={!hasSisterChapters1} onClick={() => fetchSisterChapter(1)} className="mr-2 mb-2" style={{marginRight: "10px"}}>
                         <i className="bi bi-arrow-left"></i> 
                     </Button>
-                    <Button variant="primary" onClick={() => fetchSisterChapter(0)} className="mr-2 mb-2">
+                    <Button variant="primary" disabled={!hasSisterChapters2} onClick={() => fetchSisterChapter(0)} className="mr-2 mb-2">
                         <i className="bi bi-arrow-right"></i> 
                     </Button>
                     <br></br>
-                    <Button variant="primary" onClick={fetchChildChapters} className="mb-2">
+                    <Button variant="primary" disabled={!hasChildChapters} onClick={fetchChildChapters} className="mb-2">
                         <i className="bi bi-arrow-down"></i> 
                     </Button>
                 </Card.Body>
@@ -392,14 +440,9 @@ const ViewStory = () => {
                     {"View Requests To Join (Only for authors)"}
                     </Button>
                 </Link>
-                <Link route={`/stories/${address}/newChapterRequest`}>
+                <Link route={`/stories/${address}/newChapter`}>
                     <Button variant='secondary' disabled={!isAuthor} style={{marginTop: "10px", marginRight: "10px"}}>
-                    {"New Chapter Request (Only for authors)"}
-                    </Button>
-                </Link>
-                <Link route={`/stories/${address}/viewChapterRequests`}>
-                    <Button variant='secondary' disabled={!isAuthor} style={{marginTop: "10px", marginRight: "10px"}}>
-                    {"View Chapter Requests (Only for authors)"}
+                    {"Create a New Chapter (Only for authors)"}
                     </Button>
                 </Link>
                 <Button variant="secondary" disabled={!isAuthor} onClick={handleDispenseRewards} style={{marginTop: "10px", marginRight: "10px"}}>
@@ -445,7 +488,6 @@ const ViewStory = () => {
                         />
                     </Modal.Body>
                     <Modal.Footer>
-                        <Form.Text style={{flex:"1"}}>Total number of requests to join: {storySummary.requestsToJoin.length}</Form.Text>
                         <Button variant="secondary" onClick={handleClose}>
                             Close
                         </Button>

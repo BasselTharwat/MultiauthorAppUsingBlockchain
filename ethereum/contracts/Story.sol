@@ -16,6 +16,7 @@ library SafeMath {
 
 contract StoryFactory {
     address[] public deployedStories;
+    mapping(address => string) public authorUsernames;
 
     function createStory(string memory _title, string memory _genre, string memory _mainIdea) public {
         Story newStory = new Story(msg.sender, _title, _genre, _mainIdea);
@@ -25,6 +26,16 @@ contract StoryFactory {
     function getDeployedStories() public view returns (address[] memory) {
         return deployedStories;
     }
+
+    function addAuthorUsername(string memory username) public{
+        authorUsernames[msg.sender] = username;
+    }
+
+    function getAuthorUsername() public view returns (string memory){
+        return authorUsernames[msg.sender];
+    }
+
+
 }
 
 contract Story {
@@ -52,20 +63,7 @@ contract Story {
         bool status;
     }
 
-    RequestToJoin[] public requestsToJoin;
-
-    struct ChapterRequest {
-        string ipfsHash;
-        uint256 timestamp;
-        address author;
-        address parentChapter;
-        address childChapter;
-        mapping(address => bool) approvers;
-        uint approversCount;
-        bool status;
-    }
-
-    ChapterRequest[] public chapterRequests;
+    RequestToJoin[] requestsToJoin;
 
     constructor(address _mainAuthor, string memory _title, string memory _genre, string memory _mainIdea) {
         mainAuthor = _mainAuthor;
@@ -77,7 +75,7 @@ contract Story {
         reported = false;
     }
 
-    function createRequestToJoin(string memory _proposal) public {
+    function createRequestToJoin(string memory _proposal) public noReentrancy{
         require(!reported, "This story has been reported");
         require(!authorsForSolidity[msg.sender], "Author already exists in the list of authors");
         RequestToJoin storage newRequest = requestsToJoin.push();
@@ -88,7 +86,7 @@ contract Story {
         newRequest.status = false;
     }
 
-    function approveRequestToJoin(uint256 _index) public {
+    function approveRequestToJoin(uint256 _index) public noReentrancy{
         require(!reported, "This story has been reported");
         require(authorsForSolidity[msg.sender], "Only an accepted author can approve a request");
         require(_index < requestsToJoin.length && _index>=0, "Index out of bounds");
@@ -100,8 +98,8 @@ contract Story {
         request.approvers[msg.sender] = true;
         request.approversCount = request.approversCount.add(1);
 
-        //if all authors approved, add this author to the story
-        if(request.approversCount == authorsForReact.length){
+        //if half the authors approved, add this author to the story
+        if(request.approversCount >= (authorsForReact.length)/2){
             request.status = true;
             // Update mappings and arrays accordingly
             authorsForSolidity[request.author] = true;
@@ -109,48 +107,26 @@ contract Story {
         }
     }
 
-    function createChapterRequest(string memory _ipfsHash, address _parentChapter, address _childChapter) public noReentrancy{
+    function createChapter(string memory _title,  string memory _ipfsHash, address _parentChapter, address _childChapter) public noReentrancy{
         require(!reported, "This story has been reported");
-        require(authorsForSolidity[msg.sender],"Only an accepted author can attempt to add chapter");
+        require(authorsForSolidity[msg.sender], "Only an accepted author can create a chapter");
         require(isContract(_parentChapter), "Parent chapter must be a contract");
         require(isContract(_childChapter), "Child chapter must be a contract");
         require(checkParentChapter(_parentChapter), "Parent chapter must belong to the same story");
         require(checkChildChapter(_childChapter), "Child chapter must belong to the same story");
-        ChapterRequest storage newRequest = chapterRequests.push();
-        newRequest.ipfsHash = _ipfsHash;
-        newRequest.timestamp = block.timestamp;
-        newRequest.author = msg.sender;
-        newRequest.parentChapter = _parentChapter;
-        newRequest.childChapter = _childChapter;
-        newRequest.approversCount = 0;
-        newRequest.status = false;
-    }
 
-    function approveChapterRequest(uint _index) public noReentrancy{
-        require(!reported, "This story has been reported");
-        require(authorsForSolidity[msg.sender], "Only an accepted author can approve a request");
-        require(_index < chapterRequests.length && _index>=0, "Index out of bounds");
-
-        ChapterRequest storage request = chapterRequests[_index];
-        request.approvers[msg.sender] = true;
-        request.approversCount = request.approversCount.add(1);
-
-         //if all authors approved, add this chapter to the story
-        if(request.approversCount == authorsForReact.length){
-            request.status = true;
-            Chapter newChapter = new Chapter(request.author, address(this), request.ipfsHash, request.parentChapter, request.childChapter);
-
-            if(request.parentChapter != address(0)){
-                Chapter parent = Chapter(request.parentChapter);
+        Chapter newChapter = new Chapter(msg.sender, address(this), _title,  _ipfsHash, _parentChapter, _childChapter);
+        if(_parentChapter != address(0)){
+                Chapter parent = Chapter(_parentChapter);
                 parent.linkChildChapter(address(newChapter));
             }
-            if(request.childChapter != address(0)){
-                Chapter child = Chapter(request.childChapter);
+        if(_childChapter != address(0)){
+                Chapter child = Chapter(_childChapter);
                 child.linkParentChapter(address(newChapter));
             }
-            chaptersForReact.push(address(newChapter));
-            chaptersForSolidity[address(newChapter)] = true;
-        }
+        chaptersForReact.push(address(newChapter));
+        chaptersForSolidity[address(newChapter)] = true;
+
 
     }
 
@@ -159,7 +135,7 @@ contract Story {
         //payable(address(this)).transfer(msg.value);
     }
 
-    function dispenseRewards() public {
+    function dispenseRewards() public noReentrancy{
         require(authorsForSolidity[msg.sender], "Only an authorized author can dispense rewards");
 
         uint256 totalAuthors = authorsForReact.length;
@@ -189,7 +165,7 @@ contract Story {
 
     
     function getSummary() public view returns (
-        address, string memory, string memory, string memory, address[] memory, address [] memory, uint, uint, uint, bool, uint) {
+        address, string memory, string memory, string memory, address[] memory, address [] memory, uint, uint, bool, uint) {
         return ( 
             mainAuthor,
             title,
@@ -198,7 +174,6 @@ contract Story {
             authorsForReact,
             chaptersForReact,
             requestsToJoin.length,
-            chapterRequests.length,
             reportersCount,
             reported,
             address(this).balance
@@ -250,16 +225,18 @@ contract Chapter {
 
     address public story; 
     address public author;
+    string public title;
     string public ipfsHash;
     address[] public linkedParentChapters;
     address[] public linkedChildChapters;
     mapping(address => bool) likers;
     uint256 public likeCount;
 
-    constructor(address _author, address _story, string memory _ipfsHash, address parentChapter, address childChapter) {
+    constructor(address _author, address _story, string memory _title,  string memory _ipfsHash, address parentChapter, address childChapter) {
         author = _author;
         story = _story;
         ipfsHash = _ipfsHash;
+        title = _title;
         if(parentChapter != address(0)){
             linkedParentChapters.push(parentChapter);
         }
@@ -288,10 +265,11 @@ contract Chapter {
     }
 
     function getSummary() public view returns (
-        address, address, string memory, address[] memory, address[] memory, uint) {
+        address, address, string memory, string memory, address[] memory, address[] memory, uint) {
         return ( 
             story,
             author,
+            title,
             ipfsHash,
             linkedParentChapters,
             linkedChildChapters,

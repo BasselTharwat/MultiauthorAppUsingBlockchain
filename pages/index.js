@@ -46,7 +46,6 @@ const StoryIndex = () => {
                 <Table striped bordered hover style={{ marginTop: "10px" }}>
                     <thead>
                         <tr>
-                            <th>Address</th>
                             <th>Title</th> 
                             <th>Genre</th>
                             <th>Main Idea</th>
@@ -60,10 +59,9 @@ const StoryIndex = () => {
                             <tr key={story.storyAddress}>
                                 <td>
                                     <Link route={`/stories/${story.storyAddress}/viewStory`}>
-                                        <a>{story.storyAddress}</a>
+                                        <a>{story.title}</a>
                                     </Link>
                                 </td>
-                                <td>{story.title}</td>
                                 <td>{story.genre}</td>
                                 <td>{story.mainIdea}</td>
                                 <td>{story.authors}</td>
