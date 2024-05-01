@@ -23,6 +23,7 @@
     "react-bootstrap": "^2.10.2",
     "react-dom": "^18.2.0",
     "react-graph-vis": "^1.0.7",
+    "react-vis-network-graph": "^3.0.1",
     "semantic-ui-css": "^2.5.0",
     "semantic-ui-react": "^2.1.5",
     "solc": "^0.8.9",
