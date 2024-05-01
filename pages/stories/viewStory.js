@@ -11,6 +11,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import factory from '../../ethereum/factory.js';
 
 import Graph from "react-graph-vis";
+import RenderGraph from '../../components/renderGraph.js';
 //import "./styles.css";
 // need to import the vis network css in order to show tooltip
 //import "./network.css";
@@ -18,50 +19,7 @@ import Graph from "react-graph-vis";
 
 const ViewStory = ({storyAddress}) => {
 
-    const graph = {
-        nodes: [
-          { id: 1, label: "Node 1", title: "node 1 tootip text" },
-          { id: 2, label: "Node 2", title: "node 2 tootip text" },
-          { id: 3, label: "Node 3", title: "node 3 tootip text" },
-          { id: 4, label: "Node 4", title: "node 4 tootip text" },
-          { id: 5, label: "Node 5", title: "node 5 tootip text" },
-          { id: 6, label: "Node 6", title: "node 5 tootip text" }
-        ],
-        edges: [
-          { from: 1, to: 2 },
-          { from: 1, to: 3 },
-          { from: 2, to: 4 },
-          { from: 2, to: 5 },
-          { from: 6, to: 5 }
-        ]
-      };
-     
-      const options = {
-        layout: {
-            hierarchical: {
-                enabled: true,
-                parentCentralization: true,
-                sortMethod: 'directed',
-                shakeTowards: 'leaves'
-              }
-        },
-        edges: {
-          color: "#000000"
-        },
-        height: "500px"
-      };
-     
-      const events = {
-        select: function(event) {
-          const { nodes } = event;
-          if (nodes.length > 0) {
-            const nodeId = nodes[0]; // Get the ID of the first selected node
-            console.log("Selected node ID:", nodeId);
-          }
-        }
-      };
-
-
+    
     const story = Story(storyAddress);
 
     const [show, setShow] = useState(false);
@@ -75,7 +33,9 @@ const ViewStory = ({storyAddress}) => {
                                                     reportersCount: 0,
                                                     reported: false,
                                                     balance: 0});
+    const [allChapters, setAllChapters] = useState([]);
 
+    
     const [chapterSummary, setChapterSummary] = useState({story: "",
                                                     author: "",
                                                     title: "",
@@ -83,9 +43,11 @@ const ViewStory = ({storyAddress}) => {
                                                     linkedParentChapters: [],
                                                     linkedChildChapters: [],
                                                     likeCount: 0});
+    
 
     const [isAuthor, setIsAuthor] = useState(false);
     const [authorUsernames, setAuthorUsernames] = useState([]);
+    
     const [currentChapter, setCurrentChapter] = useState("");
     const [sisterChapters, setSisterChapters] = useState([]);
     const [requestProposal, setRequestProposal] = useState("");
@@ -98,14 +60,8 @@ const ViewStory = ({storyAddress}) => {
     const [loadingContribute, setLoadingContribute] = useState(false);
     const [loadingDispense, setLoadingDispense] = useState(false);
 
-    //fix these
-    const [hasParentChapters, setHasParentChapters] = useState(true);
-    const [hasChildChapters, setHasChildChapters] = useState(true);
-    const [hasSisterChapters1, setHasSisterChapters1] = useState(true);
-    const [hasSisterChapters2, setHasSisterChapters2] = useState(true);
 
-
-
+    
 
     const handleProposalChange = (event) => {
         setRequestProposal(event.target.value);
@@ -205,6 +161,7 @@ const ViewStory = ({storyAddress}) => {
 
             fetchChapter(found[5][0]);
             fetchAuthorNames(found[4]);
+            fetchAllChapters(found[5]);
             
 
         } catch (error) {
@@ -225,7 +182,25 @@ const ViewStory = ({storyAddress}) => {
     
 
 
-    
+    const fetchAllChapters = async (foundChapters) => {
+        try{
+            const chaptersSummariesFetched = [];
+
+            for (let i = 0; i < foundChapters.length; i++) {
+                const chapter = Chapter(foundChapters[i]);
+                let chapterSummaryFetched = await chapter.methods.getSummary().call();
+                chapterSummaryFetched = { address: foundChapters[i], ...chapterSummaryFetched };
+                chaptersSummariesFetched.push(chapterSummaryFetched);
+            }
+
+            setAllChapters(chaptersSummariesFetched);
+
+
+        }catch (error) {
+            console.error('Error fetching chapter info:', error);
+        }
+        
+    };
     
     const fetchChapter = async (address) => {
         try{
@@ -477,18 +452,18 @@ const ViewStory = ({storyAddress}) => {
                         <Files chapterCid={chapterSummary.ipfsHash} /> 
                     )} 
                     </Card.Text>  
-                    <Button variant="primary" disabled={!hasParentChapters} onClick={fetchParentChapters} className="mr-2 mb-2">
+                    <Button variant="primary" onClick={fetchParentChapters} className="mr-2 mb-2">
                         <i className="bi bi-arrow-up"></i> 
                     </Button>
                     <br></br>
-                    <Button variant="primary" disabled={!hasSisterChapters1} onClick={() => fetchSisterChapter(1)} className="mr-2 mb-2" style={{marginRight: "10px"}}>
+                    <Button variant="primary" onClick={() => fetchSisterChapter(1)} className="mr-2 mb-2" style={{marginRight: "10px"}}>
                         <i className="bi bi-arrow-left"></i> 
                     </Button>
-                    <Button variant="primary" disabled={!hasSisterChapters2} onClick={() => fetchSisterChapter(0)} className="mr-2 mb-2">
+                    <Button variant="primary" onClick={() => fetchSisterChapter(0)} className="mr-2 mb-2">
                         <i className="bi bi-arrow-right"></i> 
                     </Button>
                     <br></br>
-                    <Button variant="primary" disabled={!hasChildChapters} onClick={fetchChildChapters} className="mb-2">
+                    <Button variant="primary" onClick={fetchChildChapters} className="mb-2">
                         <i className="bi bi-arrow-down"></i> 
                     </Button>
                 </Card.Body>
@@ -621,11 +596,7 @@ const ViewStory = ({storyAddress}) => {
                 </Modal>
                 
             </>
-            <Graph
-                graph={graph}
-                options={options}
-                events={events}
-            />           
+            <RenderGraph allChapters={allChapters}/>         
         </Layout>
     );
 };
