@@ -31,9 +31,9 @@ contract StoryFactory {
         authorUsernames[msg.sender] = username;
     }
 
-    function getAuthorUsername() public view returns (string memory){
-        return authorUsernames[msg.sender];
-    }
+    //function getAuthorUsername(address authorAddress) public view returns (string memory){
+    //    return authorUsernames[authorAddress];
+    //}
 
 
 }
@@ -63,7 +63,7 @@ contract Story {
         bool status;
     }
 
-    RequestToJoin[] requestsToJoin;
+    RequestToJoin[] public requestsToJoin;
 
     constructor(address _mainAuthor, string memory _title, string memory _genre, string memory _mainIdea) {
         mainAuthor = _mainAuthor;

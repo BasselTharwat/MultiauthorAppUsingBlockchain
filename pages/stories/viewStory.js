@@ -8,16 +8,17 @@ import { Card, Button, Modal, Form, Spinner, Row, Col } from 'react-bootstrap';
 import { Link } from '../../routes.js';
 import Files from '../../components/Files';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import factory from '../../ethereum/factory.js';
 
 
-const ViewStory = () => {
-    const router = useRouter();
-    const { asPath } = router;
-    const segments = asPath.split('/'); 
-    segments.pop(); 
-    const address = segments.pop();
-    const story = Story(address);
+const ViewStory = ({storyAddress}) => {
+    //const router = useRouter();
+    //const { asPath } = router; 
+    //const segments = asPath.split('/'); 
+    //const address = segments.pop(); 
 
+
+    const story = Story(storyAddress);
 
     const [show, setShow] = useState(false);
     const [storySummary, setStorySummary] = useState({mainAuthor: "",
@@ -27,7 +28,6 @@ const ViewStory = () => {
                                                     authors: [],
                                                     chapters: [],
                                                     requestsToJoin: 0,
-                                                    chapterRequests: 0,
                                                     reportersCount: 0,
                                                     reported: false,
                                                     balance: 0});
@@ -41,10 +41,13 @@ const ViewStory = () => {
                                                     likeCount: 0});
 
     const [isAuthor, setIsAuthor] = useState(false);
+    const [authorUsernames, setAuthorUsernames] = useState([]);
     const [currentChapter, setCurrentChapter] = useState("");
     const [sisterChapters, setSisterChapters] = useState([]);
     const [requestProposal, setRequestProposal] = useState("");
     const [loadingCreateRequest, setLoadingCreateRequest] = useState(false);
+    const [showUsernamePrompt, setShowUsernamePrompt] = useState(false);
+    const [requestUsername, setRequestUsername] = useState("");
     const [loadingLike, setLoadingLike] = useState(false);
     const [loadingReport, setLoadingReport] = useState(false);
     const [contributionAmount, setContributionAmount] = useState(0);
@@ -64,24 +67,69 @@ const ViewStory = () => {
         setRequestProposal(event.target.value);
     };
 
+    const handleUsernameChange = (event) => {
+        setRequestUsername(event.target.value);
+    }
+
     const handleCreateRequest = async (event) => {
         event.preventDefault();
         setLoadingCreateRequest(true);
         try {
-            const accounts = await web3.eth.getAccounts();
-            const gasEstimate = await story.methods.createRequestToJoin(requestProposal).estimateGas({
-                from: accounts[0]
-            });
-    
-            const encode = await story.methods.createRequestToJoin(requestProposal).encodeABI();
-    
-            await story.methods.createRequestToJoin(requestProposal).send({
-                from: accounts[0],
-                gas: gasEstimate.toString(),
-                data: encode
-            });
+            if(showUsernamePrompt){
+                const accounts = await web3.eth.getAccounts();
+                
+                const gasEstimateUsername = await factory.methods.addAuthorUsername(requestUsername).estimateGas({
+                    from: accounts[0]
+                });
+        
+                const encodeUsername = await factory.methods.addAuthorUsername(requestUsername).encodeABI();
+        
+                await factory.methods.addAuthorUsername(requestUsername).send({
+                    from: accounts[0],
+                    gas: gasEstimateUsername.toString(),
+                    data: encodeUsername
+                });
 
-            setRequestProposal("");
+                const gasEstimate = await story.methods.createRequestToJoin(requestProposal).estimateGas({
+                    from: accounts[0]
+                });
+        
+                const encode = await story.methods.createRequestToJoin(requestProposal).encodeABI();
+        
+                await story.methods.createRequestToJoin(requestProposal).send({
+                    from: accounts[0],
+                    gas: gasEstimate.toString(),
+                    data: encode
+                });
+
+                setRequestProposal("");
+                setRequestUsername("");
+                setShowUsernamePrompt(false);
+            }
+            else{
+                const accounts = await web3.eth.getAccounts();
+                const fetchedUsername = await factory.methods.authorUsernames(accounts[0]).call()
+                if(fetchedUsername === ""){
+                    setShowUsernamePrompt(true);
+                    setLoadingCreateRequest(false);
+                    return;
+                }
+                else{
+                    const gasEstimate = await story.methods.createRequestToJoin(requestProposal).estimateGas({
+                        from: accounts[0]
+                    });
+            
+                    const encode = await story.methods.createRequestToJoin(requestProposal).encodeABI();
+            
+                    await story.methods.createRequestToJoin(requestProposal).send({
+                        from: accounts[0],
+                        gas: gasEstimate.toString(),
+                        data: encode
+                    });
+
+                    setRequestProposal("");
+                }
+            }
     
         } catch (error) {
             console.error('Error creating request:', error);
@@ -93,7 +141,6 @@ const ViewStory = () => {
     async function fetchStoryInfo() {
         try {
             const found = await story.methods.getSummary().call();
-
             
             setStorySummary({
                 mainAuthor: found[0],
@@ -113,6 +160,7 @@ const ViewStory = () => {
             }
 
             fetchChapter(found[5][0]);
+            fetchAuthorNames(found[4]);
             
 
         } catch (error) {
@@ -130,6 +178,7 @@ const ViewStory = () => {
 
     const handleClose = () => setShow(false);
     const handleShow = () => setShow(true);
+    
 
 
     
@@ -346,6 +395,20 @@ const ViewStory = () => {
         setLoadingDispense(false);
         
     };
+
+    const fetchAuthorNames = async (authorAddresses) => {
+        try {
+            const usernames = [];
+            for (let i = 0; i < authorAddresses.length; i++) {
+                const username = await factory.methods.authorUsernames(authorAddresses[i]).call();
+                usernames.push(username);
+            }
+
+            setAuthorUsernames(usernames);
+        } catch (error) {
+            console.error('Error fetching author names:', error);
+        }
+    };
        
   
 
@@ -386,7 +449,7 @@ const ViewStory = () => {
                     </Button>
                 </Card.Body>
                 <Card.Footer style={{marginBottom: '10px', overflowWrap: 'break-word', wordWrap: 'break-word' }}>
-                        {"Meet the authors : " + storySummary.authors}
+                        {"Meet the authors : " + authorUsernames}
                     </Card.Footer>
             </Card>
             <>
@@ -435,12 +498,12 @@ const ViewStory = () => {
                     Create a request to join
                 </Button>
                 <br></br>
-                <Link route={`/stories/${address}/viewRequestsToJoin`}>
+                <Link route={`/stories/${storyAddress}/viewRequestsToJoin`}>
                     <Button variant='secondary' disabled={!isAuthor} style={{marginTop: "10px", marginRight: "10px"}}>
                     {"View Requests To Join (Only for authors)"}
                     </Button>
                 </Link>
-                <Link route={`/stories/${address}/newChapter`}>
+                <Link route={`/stories/${storyAddress}/newChapter`}>
                     <Button variant='secondary' disabled={!isAuthor} style={{marginTop: "10px", marginRight: "10px"}}>
                     {"Create a New Chapter (Only for authors)"}
                     </Button>
@@ -486,6 +549,15 @@ const ViewStory = () => {
                             value={requestProposal}
                             onChange={handleProposalChange} 
                         />
+                    {showUsernamePrompt && <Form.Group controlId="username">
+                        <Form.Label>You are not registered as an author</Form.Label>
+                        <Form.Control 
+                            type="text" 
+                            placeholder="Enter your username" 
+                            value={requestUsername} 
+                            onChange={handleUsernameChange}
+                        />
+                    </Form.Group>}
                     </Modal.Body>
                     <Modal.Footer>
                         <Button variant="secondary" onClick={handleClose}>
@@ -494,7 +566,7 @@ const ViewStory = () => {
                         <Button variant="primary" onClick={handleCreateRequest}>
                             {loadingCreateRequest && <Spinner
                                 as="span"
-                                animation="border"
+                                animation="border"  
                                 size="sm"
                                 role="status"
                                 aria-hidden="true"
@@ -511,4 +583,12 @@ const ViewStory = () => {
 };
 
 export default ViewStory;
+
+export async function getServerSideProps(context) {
+    return {
+        props: {
+            storyAddress: context.query.address
+        }
+    };
+}
 

@@ -53,6 +53,7 @@ const CreateStory = () => {
             });
 
             setNewUsername("");
+
     
         } catch (error) {
             console.error('Error creating request:', error);
@@ -66,8 +67,7 @@ const CreateStory = () => {
         setError('');
         try {
             const accounts = await web3.eth.getAccounts();
-            const fetchedUsername = await factory.methods.getAuthorUsername().call();
-            console.log(fetchedUsername.toString());
+            const fetchedUsername = await factory.methods.authorUsernames(accounts[0]).call();
             if (fetchedUsername === "") {
                 handleShow();
             } else {
@@ -121,7 +121,9 @@ const CreateStory = () => {
                 </Button>
             </Form>
             <Modal show={show} onHide={handleClose}>
-                <Modal.Title closebutton style={{marginLeft: "10px", marginTop: "10px"}}>You are not registered as an author.</Modal.Title>
+                <Modal.Header closeButton>
+                    <Modal.Title style={{ marginLeft: "10px", marginTop: "10px" }}>You are not registered as an author.</Modal.Title>
+                </Modal.Header>
                 <Modal.Body>
                     <Form.Group controlId="formUsername">
                         <Form.Label>Create a Username</Form.Label>
@@ -141,6 +143,7 @@ const CreateStory = () => {
                     </Button>
                 </Modal.Footer>
             </Modal>
+
         </div>
     );
 };

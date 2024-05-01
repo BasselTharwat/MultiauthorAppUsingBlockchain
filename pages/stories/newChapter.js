@@ -35,12 +35,12 @@ const NewChapter = () => {
       const ipfsHash = await res.text();
       
       const accounts = await web3.eth.getAccounts();
-      const gasEstimate = await story.methods.createChapter(title, ipfsHash, parentChapter, childChapter).estimateGas({
+      const gasEstimate = await story.methods.createChapter(chapterTitle, ipfsHash, parentChapter, childChapter).estimateGas({
         from: accounts[0]
       });
-      const encode = await story.methods.createChapter(title, ipfsHash, parentChapter, childChapter).encodeABI();
+      const encode = await story.methods.createChapter(chapterTitle, ipfsHash, parentChapter, childChapter).encodeABI();
 
-      await story.methods.createChapter(title, ipfsHash, parentChapter, childChapter).send({
+      await story.methods.createChapter(chapterTitle, ipfsHash, parentChapter, childChapter).send({
         from: accounts[0],
         gas: gasEstimate.toString(),
         data: encode
