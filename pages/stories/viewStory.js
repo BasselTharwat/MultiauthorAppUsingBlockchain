@@ -1,20 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '../../components/layout';
-import Story from '../../ethereum/story';
+import Layout from '../../components/layout.js';
+import Story from '../../ethereum/story.js';
 import Chapter from '../../ethereum/chapter.js'
-import web3 from '../../ethereum/web3';
+import web3 from '../../ethereum/web3.js';
 import { useRouter } from 'next/router';
 import { Card, Button, Modal, Form, Spinner, Row, Col } from 'react-bootstrap';
 import { Link } from '../../routes.js';
-import Files from '../../components/Files';
+import Files from '../../components/Files.jsx';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import factory from '../../ethereum/factory.js';
 
-import Graph from "react-graph-vis";
+
 import RenderGraph from '../../components/renderGraph.js';
-//import "./styles.css";
-// need to import the vis network css in order to show tooltip
-//import "./network.css";
 
 
 const ViewStory = ({storyAddress}) => {
@@ -32,7 +29,8 @@ const ViewStory = ({storyAddress}) => {
                                                     requestsToJoin: 0,
                                                     reportersCount: 0,
                                                     reported: false,
-                                                    balance: 0});
+                                                    balance: 0,
+                                                    coverPhoto: ""});
     const [allChapters, setAllChapters] = useState([]);
 
     
@@ -152,7 +150,8 @@ const ViewStory = ({storyAddress}) => {
                 requestsToJoin: Number(found[6]),
                 reportersCount: Number(found[7]),
                 reported: found[8],
-                balance: Number(found[9])
+                balance: Number(found[9]),
+                coverPhoto: found[10]
             });
 
             if(found[5].length>0){
@@ -193,6 +192,7 @@ const ViewStory = ({storyAddress}) => {
                 chaptersSummariesFetched.push(chapterSummaryFetched);
             }
 
+            console.log(chaptersSummariesFetched);
             setAllChapters(chaptersSummariesFetched);
 
 
@@ -444,14 +444,18 @@ const ViewStory = ({storyAddress}) => {
     return(
         <Layout  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         
-            <Card style={{ width: '50rem', marginBottom: '10px', textAlign: 'center' }}>
+            <Card style={{ height: '80vh', width: '100%', maxWidth: '100vw', marginBottom: '10px', textAlign: 'center' }}>
                 <Card.Body>
-                    <Card.Title>{"Chapter: "+ currentChapter}</Card.Title>
+                    <Card.Title>{"Chapter: " + chapterSummary.title} <br/> {chapterSummary.author} <br/> {chapterSummary.likeCount>0 ? chapterSummary.likeCount+" likes" : ""}</Card.Title>
                     <Card.Text style={{ overflowWrap: 'break-word', wordWrap: 'break-word' }}>
                     {chapterSummary && chapterSummary.ipfsHash && ( 
                         <Files chapterCid={chapterSummary.ipfsHash} /> 
                     )} 
                     </Card.Text>  
+                    
+                </Card.Body>
+                <Card.Footer style={{marginBottom: '10px', overflowWrap: 'break-word', wordWrap: 'break-word' }}>
+                    <br></br>
                     <Button variant="primary" onClick={fetchParentChapters} className="mr-2 mb-2">
                         <i className="bi bi-arrow-up"></i> 
                     </Button>
@@ -466,9 +470,6 @@ const ViewStory = ({storyAddress}) => {
                     <Button variant="primary" onClick={fetchChildChapters} className="mb-2">
                         <i className="bi bi-arrow-down"></i> 
                     </Button>
-                </Card.Body>
-                <Card.Footer style={{marginBottom: '10px', overflowWrap: 'break-word', wordWrap: 'break-word' }}>
-                        {"Meet the authors : " + authorUsernames}
                     </Card.Footer>
             </Card>
             <>

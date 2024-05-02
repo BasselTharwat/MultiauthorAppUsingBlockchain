@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '../../components/layout';
-import Story from '../../ethereum/story';
-import web3 from '../../ethereum/web3';
+import Layout from '../../components/layout.js';
+import Story from '../../ethereum/story.js';
+import factory from '../../ethereum/factory.js';
+import web3 from '../../ethereum/web3.js';
 import { useRouter } from 'next/router';
 import { Table, Button, Spinner } from 'react-bootstrap';
 
-const ViewRequestsToJoin = () => {
-    const router = useRouter();
-    const { asPath } = router;
-    const segments = asPath.split('/'); 
-    segments.pop(); 
-    const address = segments.pop();
-    const story = Story(address);
+const ViewRequestsToJoin = ({storyAddress}) => {
+    const story = Story(storyAddress);
 
     const [requestsToJoin, setRequestsToJoin] = useState([]);
     const [authorsCount, setAuthorsCount] = useState(0);
     const [voteLoading , setVoteLoading] = useState(false);
+    const [usernames, setUsernames] = useState({});
 
     async function viewRequests() {
         try {
@@ -36,6 +33,25 @@ const ViewRequestsToJoin = () => {
         }
     }
 
+    async function fetchUsernames() {
+        const newUsernameState = {};
+        await Promise.all(
+            requestsToJoin.map(async (request, index) => {
+                const username = await factory.methods.authorUsernames(request[2]).call();
+                newUsernameState[index] = username;
+            })
+        );
+        setUsernames(newUsernameState);
+    }
+
+    useEffect(() => {
+        viewRequests();
+    }, []);
+
+    useEffect(() => {
+        fetchUsernames();
+    }, [requestsToJoin]);
+
     function interpretTimestamp(foundTimestamp){
         // Convert the Unix timestamp to milliseconds (Unix timestamps are in seconds)
         const milliseconds = Number(foundTimestamp) * 1000;
@@ -52,7 +68,6 @@ const ViewRequestsToJoin = () => {
 
     const handleVoteClick = async (index) => {
         setVoteLoading(true);
-        const story = Story(address);
         try {
             const accounts = await web3.eth.getAccounts();
             const gasEstimate = await story.methods.approveRequestToJoin(index).estimateGas({
@@ -66,18 +81,13 @@ const ViewRequestsToJoin = () => {
                 data: encode
             });
 
-            window.location.href = 'http://localhost:3000';
-
 
         } catch (error) {
             console.error(error);
         }
         setVoteLoading(false);
-    };
-
-    useEffect(() => {
         viewRequests();
-    }, []);
+    };
 
     return(
         <Layout>
@@ -87,7 +97,7 @@ const ViewRequestsToJoin = () => {
                     <tr>
                         <th>Proposal</th>
                         <th>Timestamp</th>
-                        <th>Address of author</th>
+                        <th>Author</th>
                         <th>Aprrovers Count</th>
                         <th>Status</th>
                         <th>Vote</th>
@@ -98,7 +108,7 @@ const ViewRequestsToJoin = () => {
                     <tr key={index}>
                         <td>{request[0]}</td>
                         <td>{interpretTimestamp(Number(request[1]))}</td>
-                        <td>{request[2]}</td>
+                        <td>{usernames[index]}</td>
                         <td>{request[4].toString() === "true" ? "All have Voted" : Number(request[3]) +"/"+ authorsCount}</td>
                         <td>{request[4].toString() === "true" ? "accepted" : "not accepted"}</td>
                         <td>{request[4].toString() === "false" ?
@@ -124,3 +134,11 @@ const ViewRequestsToJoin = () => {
 };
 
 export default ViewRequestsToJoin;
+
+export async function getServerSideProps(context) {
+    return {
+        props: {
+            storyAddress: context.query.address
+        }
+    };
+}

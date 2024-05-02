@@ -5,6 +5,7 @@ routes
     .add('/stories/:address', 'stories/viewStory')
     .add('/stories/:address/viewRequestsToJoin', 'stories/viewRequestsToJoin')
     .add('/stories/:address/newChapter', 'stories/newChapter')
+    .add('/createStory','createStory')
 
 
 module.exports = routes;  

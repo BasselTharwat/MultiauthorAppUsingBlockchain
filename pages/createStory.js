@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { Button, Form } from 'react-bootstrap';
 import Modal from 'react-bootstrap/Modal';
 import Spinner from 'react-bootstrap/Spinner';
-import web3 from '../ethereum/web3';
+import web3 from '../ethereum/web3.js';
 import factory from '../ethereum/factory.js';
+import Layout from '../components/layout.js';
 
 const CreateStory = () => {
     const [mainIdea, setMainIdea] = useState("");
     const [title, setTitle] = useState("");
     const [genre, setGenre] = useState("");
+    const [coverPhotoFile, setCoverPhotoFile] = useState(null); // New state for cover photo
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [show, setShow] = useState(false);
@@ -39,7 +41,6 @@ const CreateStory = () => {
         setLoadingCreateUsername(true);
         try {
             const accounts = await web3.eth.getAccounts();
-            console.log(newUsername);
             const gasEstimate = await factory.methods.addAuthorUsername(newUsername).estimateGas({
                 from: accounts[0]
             });
@@ -61,6 +62,10 @@ const CreateStory = () => {
         setLoadingCreateUsername(false);
     };
 
+    const handleCoverPhotoChange = (event) => {
+        setCoverPhotoFile(event.target.files[0]);
+    };
+
     const handleSubmit = async (event) => {
         event.preventDefault();
         setLoading(true);
@@ -71,13 +76,26 @@ const CreateStory = () => {
             if (fetchedUsername === "") {
                 handleShow();
             } else {
+                let coverPhotoIpfsHash = '';
+                if (coverPhotoFile) {
+                    const formData = new FormData();
+                    formData.append('file', coverPhotoFile, { filename: coverPhotoFile.name });
+
+                    const response = await fetch('/api/addToIPFS', {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    coverPhotoIpfsHash = await response.text();
+                }
                 // Create a story on the blockchain
-                await factory.methods.createStory(title, genre, mainIdea).send({
+                await factory.methods.createStory(title, genre, mainIdea, coverPhotoIpfsHash).send({
                     from: accounts[0]
                 });
                 setMainIdea("");
                 setTitle("");
                 setGenre("");
+                setCoverPhotoFile(null); // Clear cover photo file state
                 // Redirect to localhost:3000 after story creation
                 window.location.href = 'http://localhost:3000';
             }
@@ -88,19 +106,12 @@ const CreateStory = () => {
     };
 
     return (
-        <div>
+        
+        <Layout>
             <h2>Create a New Story!</h2>
             <Form onSubmit={handleSubmit}>
-                <Form.Group controlId="formMainIdea">
-                    <Form.Label>Write the main idea</Form.Label>
-                    <Form.Control
-                        type="text"
-                        value={mainIdea}
-                        onChange={handleInputChangeMainIdea}
-                    />
-                </Form.Group>
                 <Form.Group controlId="formTitle">
-                    <Form.Label>Give your story a title</Form.Label>
+                    <Form.Label style={{ marginTop: "10px" }}>Give your story a title</Form.Label>
                     <Form.Control
                         type="text"
                         value={title}
@@ -108,16 +119,33 @@ const CreateStory = () => {
                     />
                 </Form.Group>
                 <Form.Group controlId="formGenre">
-                    <Form.Label>Identify the genre</Form.Label>
+                    <Form.Label style={{ marginTop: "10px" }}>Identify the genre</Form.Label>
                     <Form.Control
                         type="text"
                         value={genre}
                         onChange={handleInputChangeGenre}
                     />
                 </Form.Group>
+                <Form.Group controlId="formMainIdea">
+                    <Form.Label style={{ marginTop: "10px" }}>Write your main idea</Form.Label>
+                    <Form.Control
+                        as="textarea"
+                        rows={4} 
+                        value={mainIdea}
+                        onChange={handleInputChangeMainIdea}
+                    />
+                </Form.Group>
+                <Form.Group controlId="formCoverPhoto">
+                    <Form.Label style={{ marginTop: "10px" }}>Upload a cover photo</Form.Label>
+                    <Form.Control
+                        type="file"
+                        accept="image/*"
+                        onChange={handleCoverPhotoChange}
+                    />
+                </Form.Group>
                 {error && <p style={{ color: 'red' }}>{error}</p>}
-                <Button variant="primary" type="submit" disabled={loading} style={{marginTop: "10px"}}>
-                    {loading ? 'Creating...' : 'Create a New Story!'}
+                <Button variant="primary" type="submit" style={{marginTop: "10px", width: "200px"}}>
+                    {loading ? <Spinner animation="border" size="sm" /> : 'Publish!'}
                 </Button>
             </Form>
             <Modal show={show} onHide={handleClose}>
@@ -144,7 +172,7 @@ const CreateStory = () => {
                 </Modal.Footer>
             </Modal>
 
-        </div>
+        </Layout>
     );
 };
 

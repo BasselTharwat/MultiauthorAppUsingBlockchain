@@ -46,6 +46,8 @@ export default function Files(props) {
   );
 }
 */
+
+
 import React, { useState, useEffect } from "react";
 require('dotenv').config({path: '../.env'});
 
@@ -102,18 +104,18 @@ export default function Files(props) {
         <pre>{fileContent}</pre>
       )}
       {fileType === 'image' && fileContent && (
-        <img src={fileContent} alt="Image" />
+        <div className="d-flex justify-content-center align-items-center"> {/*style={{ width: '286px', height: '180px' }}*/}
+          <img src={fileContent} alt="Image" style={{ maxWidth: '100%', maxHeight: '100%' }} />
+        </div>
       )}
       {fileType === 'audio' && fileContent && (
         <audio controls>
           <source src={fileContent} type="audio/mp3" />
-          
         </audio>
       )}
       {fileType === 'video' && fileContent && (
         <video controls>
           <source src={fileContent} type="video/mp4" />
-          
         </video>
       )}
     </>

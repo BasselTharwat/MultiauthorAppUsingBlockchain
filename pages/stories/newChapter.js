@@ -5,13 +5,8 @@ import { useRouter } from 'next/router';
 import web3 from '../../ethereum/web3.js';
 import { Button, Spinner, Form } from 'react-bootstrap';
 
-const NewChapter = () => {
-  const router = useRouter();
-  const { asPath } = router;
-  const segments = asPath.split('/'); 
-  segments.pop(); 
-  const address = segments.pop();
-  const story = Story(address);
+const NewChapter = ({storyAddress}) => {
+  const story = Story(storyAddress);
 
   const [file, setFile] = useState("");
   const [parentChapter, setParentChapter] = useState("0x0000000000000000000000000000000000000000");
@@ -28,7 +23,7 @@ const NewChapter = () => {
       formData.append("file", fileToUpload, { filename: fileToUpload.name });
       
       // Upload the file to IPFS
-      const res = await fetch("../../api/newChapterIPFS", {
+      const res = await fetch("../../api/addToIPFS", {
         method: "POST",
         body: formData,
       });
@@ -48,7 +43,9 @@ const NewChapter = () => {
       
 
       setUploading(false);
-      window.location.href = 'http://localhost:3000';
+      setChapterTitle("");
+      setChildChapter("0x0000000000000000000000000000000000000000");
+      setParentChapter("0x0000000000000000000000000000000000000000");
 
     } catch (e) {
       console.log(e);
@@ -144,3 +141,11 @@ const NewChapter = () => {
 };
 
 export default NewChapter;
+
+export async function getServerSideProps(context) {
+  return {
+      props: {
+          storyAddress: context.query.address
+      }
+  };
+}

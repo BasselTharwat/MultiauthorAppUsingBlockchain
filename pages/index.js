@@ -2,61 +2,51 @@ import React from 'react';
 import Layout from '../components/layout';
 import factory from '../ethereum/factory';
 import Story from '../ethereum/story';
-import { Table } from 'react-bootstrap';
+import { Card, Button, Row, Col } from 'react-bootstrap'; 
 import 'bootstrap/dist/css/bootstrap.min.css';
-import CreateStory from '../components/CreateStory';
 import { Link } from '../routes';
+import Files from '../components/Files';
 
 const StoryIndex = ({ stories }) => {
-
     const renderStories = () => {
         if (!stories || stories.length === 0) {
             return <p>No stories found.</p>;
         } else {
             return (
-                <Table striped bordered hover style={{ marginTop: "10px" }}>
-                    <thead>
-                        <tr>
-                            <th>Title</th> 
-                            <th>Genre</th>
-                            <th>Main Idea</th>
-                            <th>Authors</th>
-                            <th>Chapters</th>
-                            <th>Reported</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                <div style={{marginTop:"20px"}}> 
+                    <Row className="gap-2">
                         {stories.map(story => (
-                            <tr key={story.storyAddress}>
-                                <td>
-                                    <Link route={`/stories/${story.storyAddress}`}>
-                                        <a>{story.title}</a>
-                                    </Link>
-                                </td>
-                                <td>{story.genre}</td>
-                                <td>{story.mainIdea}</td>
-                                <td>{story.authors}</td>
-                                <td>{story.chapters}</td>
-                                <td>{story.reported.toString()}</td>
-                            </tr>
+                            <Col key={story.storyAddress} className="d-flex">
+                                <Card className="h-100" style={{ width: "20rem" }}>
+                                    <Files chapterCid={story.coverPhotoIpfsHash} />
+                                    <Card.Body className="d-flex flex-column">
+                                        <Card.Title className="text-truncate" style={{ maxWidth: "100%" }}>{story.title}</Card.Title>
+                                        <Card.Text className="text-truncate" style={{ maxWidth: "100%", flex: "1 1 auto" }}>{story.mainIdea}</Card.Text>
+                                        <Link route={`/stories/${story.storyAddress}`}>
+                                            <Button variant="secondary">Read Story</Button>
+                                        </Link>
+                                    </Card.Body>
+                                </Card>
+                            </Col>
                         ))}
-                    </tbody>
-                </Table>
+                    </Row>
+                </div>
             );
         }
     };
 
     return (
-        <div>
-            <Layout>
-                <h2>Stories</h2>  
-                {renderStories()}  
-                <CreateStory />
-            </Layout>
-        </div>
+        <Layout>
+            
+            {renderStories()}
+            <div style={{ position: "fixed", bottom: "30px", right: "50px" }}>
+                <Link route="/createStory">
+                    <Button variant="primary" style={{ width: "200px", height: "50px" }}>Create Your Story</Button>
+                </Link>
+            </div>
+        </Layout>
     );
 };
-
 export async function getServerSideProps() {
     try {
         const fetchedStories = await factory.methods.getDeployedStories().call();
@@ -74,7 +64,8 @@ export async function getServerSideProps() {
                 requestsToJoinCount: Number(summary[6]),
                 reportersCount: Number(summary[7]),
                 reported: summary[8],
-                balance: Number(summary[9])
+                balance: Number(summary[9]),
+                coverPhotoIpfsHash: summary[10] // Assuming this is where the cover photo IPFS hash is stored
             };
         }));
         return {

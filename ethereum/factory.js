@@ -3,7 +3,7 @@ const StoryFactory = require("./build/StoryFactory.json");
 
 const instance = new web3.eth.Contract(
   StoryFactory.abi,
-  "0x54783B70CeAE9B7F7c52b6d75409214cA2FCF35C"
+  "0xC637BC7f73a1aDC4e71d30A4e4496A24aA301295"
 );
 
 module.exports = instance;

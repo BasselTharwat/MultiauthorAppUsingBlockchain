@@ -18,8 +18,8 @@ contract StoryFactory {
     address[] public deployedStories;
     mapping(address => string) public authorUsernames;
 
-    function createStory(string memory _title, string memory _genre, string memory _mainIdea) public {
-        Story newStory = new Story(msg.sender, _title, _genre, _mainIdea);
+    function createStory(string memory _title, string memory _genre, string memory _mainIdea, string memory _coverPhoto) public {
+        Story newStory = new Story(msg.sender, _title, _genre, _mainIdea, _coverPhoto);
         deployedStories.push(address(newStory));
     }
 
@@ -31,10 +31,6 @@ contract StoryFactory {
         authorUsernames[msg.sender] = username;
     }
 
-    //function getAuthorUsername(address authorAddress) public view returns (string memory){
-    //    return authorUsernames[authorAddress];
-    //}
-
 
 }
 
@@ -45,6 +41,7 @@ contract Story {
     string title;
     string genre;
     string mainIdea;
+    string coverPhoto;
     mapping(address => bool) public authorsForSolidity;
     address[] public authorsForReact;
     mapping(address => bool) public chaptersForSolidity;
@@ -65,13 +62,14 @@ contract Story {
 
     RequestToJoin[] public requestsToJoin;
 
-    constructor(address _mainAuthor, string memory _title, string memory _genre, string memory _mainIdea) {
+    constructor(address _mainAuthor, string memory _title, string memory _genre, string memory _mainIdea, string memory _coverPhoto) {
         mainAuthor = _mainAuthor;
         authorsForSolidity[_mainAuthor] = true;
         authorsForReact.push(_mainAuthor);
         title = _title;
         genre = _genre;
         mainIdea = _mainIdea;
+        coverPhoto = _coverPhoto;
         reported = false;
     }
 
@@ -165,7 +163,7 @@ contract Story {
 
     
     function getSummary() public view returns (
-        address, string memory, string memory, string memory, address[] memory, address [] memory, uint, uint, bool, uint) {
+        address, string memory, string memory, string memory, address[] memory, address [] memory, uint, uint, bool, uint, string memory) {
         return ( 
             mainAuthor,
             title,
@@ -176,7 +174,8 @@ contract Story {
             requestsToJoin.length,
             reportersCount,
             reported,
-            address(this).balance
+            address(this).balance,
+            coverPhoto
         );
     }
 
