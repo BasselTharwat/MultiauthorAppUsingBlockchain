@@ -1,55 +1,6 @@
-/*
-import React from "react";
-require('dotenv').config({path: '../.env'});
-
-const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL
-  ? process.env.NEXT_PUBLIC_GATEWAY_URL
-  : "https://gateway.pinata.cloud";
-
-
-export default function Files(props) {
-  return (
-    <div className="file-viewer">
-      <p>Your IPFS CID:</p>
-      <p>{props.chapterCid}</p>
-      <a
-        href={`${GATEWAY_URL}/ipfs/${props.chapterCid}?pinataGatewayToken=${process.env.NEXT_PUBLIC_GATEWAY_TOKEN}`}
-        rel="noopener noreferrer"
-        target="_blank"
-      >
-        View file
-      </a>
-    </div>
-  );
-}
-*/
-
-
-/*
-import React from "react";
-require('dotenv').config({path: '../.env'});
-
-const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL
-  ? process.env.NEXT_PUBLIC_GATEWAY_URL
-  : "https://gateway.pinata.cloud";
-
-
-export default function Files(props) {
-  return (
-      <a
-        href={`${GATEWAY_URL}/ipfs/${props.chapterCid}?pinataGatewayToken=${process.env.NEXT_PUBLIC_GATEWAY_TOKEN}`}
-        rel="noopener noreferrer"
-        target="_blank"
-      >
-        {props.chapterCid}
-      </a>
-  );
-}
-*/
-
-
 import React, { useState, useEffect } from "react";
 require('dotenv').config({path: '../.env'});
+import { Card } from "react-bootstrap";
 
 const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL
   ? process.env.NEXT_PUBLIC_GATEWAY_URL
@@ -99,12 +50,12 @@ export default function Files(props) {
   }, [props.chapterCid]);
 
   return (
-    <>
+    <div>
       {fileType === 'text' && fileContent && (
-        <pre>{fileContent}</pre>
+        <Card.Text style={{maxHeight: '100&', overflowY: 'auto'}}>{fileContent}</Card.Text>
       )}
       {fileType === 'image' && fileContent && (
-        <div className="d-flex justify-content-center align-items-center"> {/*style={{ width: '286px', height: '180px' }}*/}
+        <div className="d-flex justify-content-center align-items-center">
           <img src={fileContent} alt="Image" style={{ maxWidth: '100%', maxHeight: '100%' }} />
         </div>
       )}
@@ -118,6 +69,6 @@ export default function Files(props) {
           <source src={fileContent} type="video/mp4" />
         </video>
       )}
-    </>
+    </div>
   );
 }

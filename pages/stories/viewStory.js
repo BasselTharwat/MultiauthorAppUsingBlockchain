@@ -192,7 +192,6 @@ const ViewStory = ({storyAddress}) => {
                 chaptersSummariesFetched.push(chapterSummaryFetched);
             }
 
-            console.log(chaptersSummariesFetched);
             setAllChapters(chaptersSummariesFetched);
 
 
@@ -205,8 +204,10 @@ const ViewStory = ({storyAddress}) => {
     const fetchChapter = async (address) => {
         try{
             if(address){
+                console.log("current chapter's address: ", address)
                 const chapter = Chapter(address);
                 const found = await chapter.methods.getSummary().call();
+                
                 
 
                 setChapterSummary({
@@ -446,12 +447,9 @@ const ViewStory = ({storyAddress}) => {
         
             <Card style={{ height: '80vh', width: '100%', maxWidth: '100vw', marginBottom: '10px', textAlign: 'center' }}>
                 <Card.Body>
-                    <Card.Title>{"Chapter: " + chapterSummary.title} <br/> {chapterSummary.author} <br/> {chapterSummary.likeCount>0 ? chapterSummary.likeCount+" likes" : ""}</Card.Title>
-                    <Card.Text style={{ overflowWrap: 'break-word', wordWrap: 'break-word' }}>
+                    <Card.Title>{"Chapter: " + chapterSummary.title} <br/> {authorUsernames} <br/> {chapterSummary.likeCount>0 ? chapterSummary.likeCount+" likes" : ""}</Card.Title>
                     {chapterSummary && chapterSummary.ipfsHash && ( 
-                        <Files chapterCid={chapterSummary.ipfsHash} /> 
-                    )} 
-                    </Card.Text>  
+                        <Files chapterCid={chapterSummary.ipfsHash} />)}
                     
                 </Card.Body>
                 <Card.Footer style={{marginBottom: '10px', overflowWrap: 'break-word', wordWrap: 'break-word' }}>
