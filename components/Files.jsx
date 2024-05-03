@@ -52,7 +52,7 @@ export default function Files(props) {
   return (
     <div>
       {fileType === 'text' && fileContent && (
-        <Card.Text style={{maxHeight: '100&', overflowY: 'auto'}}>{fileContent}</Card.Text>
+        <p style={{maxWidth: '100%', maxHeight: '100%'}}>{fileContent}</p>
       )}
       {fileType === 'image' && fileContent && (
         <div className="d-flex justify-content-center align-items-center">
@@ -65,7 +65,7 @@ export default function Files(props) {
         </audio>
       )}
       {fileType === 'video' && fileContent && (
-        <video controls>
+        <video controls style={{ maxWidth: '100%', maxHeight: '100%' }}>
           <source src={fileContent} type="video/mp4" />
         </video>
       )}

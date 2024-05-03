@@ -42,7 +42,11 @@ const RenderGraph = (props) => {
         edges: {
             color: "#000000"
         },
-        height: "500px"
+        height: "100%",
+        interaction: {
+            zoomView: false, // Disable zooming
+            dragView: true // Enable dragging
+        }
     };
 
     const events = {

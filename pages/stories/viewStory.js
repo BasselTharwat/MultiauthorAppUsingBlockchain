@@ -4,11 +4,12 @@ import Story from '../../ethereum/story.js';
 import Chapter from '../../ethereum/chapter.js'
 import web3 from '../../ethereum/web3.js';
 import { useRouter } from 'next/router';
-import { Card, Button, Modal, Form, Spinner, Row, Col } from 'react-bootstrap';
+import { Card, Button, Modal, Form, Spinner, Row, Col, Container } from 'react-bootstrap';
 import { Link } from '../../routes.js';
 import Files from '../../components/Files.jsx';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import factory from '../../ethereum/factory.js';
+import { HandThumbsUpFill, HandThumbsUp  } from 'react-bootstrap-icons';
 
 
 import RenderGraph from '../../components/renderGraph.js';
@@ -45,9 +46,7 @@ const ViewStory = ({storyAddress}) => {
 
     const [isAuthor, setIsAuthor] = useState(false);
     const [authorUsernames, setAuthorUsernames] = useState([]);
-    
     const [currentChapter, setCurrentChapter] = useState("");
-    const [sisterChapters, setSisterChapters] = useState([]);
     const [requestProposal, setRequestProposal] = useState("");
     const [loadingCreateRequest, setLoadingCreateRequest] = useState(false);
     const [showUsernamePrompt, setShowUsernamePrompt] = useState(false);
@@ -58,6 +57,8 @@ const ViewStory = ({storyAddress}) => {
     const [loadingContribute, setLoadingContribute] = useState(false);
     const [loadingDispense, setLoadingDispense] = useState(false);
 
+    const [toggleView, setToggleView] = useState("Tree View"); //Chapter View or Tree View
+
 
     
 
@@ -67,6 +68,13 @@ const ViewStory = ({storyAddress}) => {
 
     const handleUsernameChange = (event) => {
         setRequestUsername(event.target.value);
+    }
+
+    const handleToggleView = () => {
+        if(toggleView === "Chapter View")
+            setToggleView("Tree View");
+        else
+            setToggleView("Chapter View");
     }
 
     const handleCreateRequest = async (event) => {
@@ -204,10 +212,8 @@ const ViewStory = ({storyAddress}) => {
     const fetchChapter = async (address) => {
         try{
             if(address){
-                console.log("current chapter's address: ", address)
                 const chapter = Chapter(address);
                 const found = await chapter.methods.getSummary().call();
-                
                 
 
                 setChapterSummary({
@@ -231,11 +237,22 @@ const ViewStory = ({storyAddress}) => {
         
     };
 
-    const fetchChildChapters = async () => {
+    const fetchNextChapter = async () => {
         try{
-            setSisterChapters(chapterSummary.linkedChildChapters);
-            const chapterAddress = chapterSummary.linkedChildChapters[0];
-            fetchChapter(chapterAddress);
+            if(chapterSummary.linkedChildChapters.length>0){
+                let maxLikes = -1;
+                let mostLikedChapter = "";
+                for(let i =0; i<chapterSummary.linkedChildChapters.length ;i++){
+                    let chapter = Chapter(chapterSummary.linkedChildChapters[i]);
+                    let likeCount = Number(await chapter.methods.likeCount().call());
+                    if(likeCount>maxLikes){
+                        maxLikes = likeCount;
+                        mostLikedChapter = chapterSummary.linkedChildChapters[i];
+                    }
+                }
+                fetchChapter(mostLikedChapter);
+            }
+            
 
         }catch (error) {
             console.error('Error fetching chapter info:', error);
@@ -244,11 +261,22 @@ const ViewStory = ({storyAddress}) => {
 
     }
 
-    const fetchParentChapters = async () => {
+    const fetchPreviousChapter = async () => {
         try{
-            setSisterChapters(chapterSummary.linkedParentChapters);
-            const chapterAddress = chapterSummary.linkedParentChapters[0];
-            fetchChapter(chapterAddress);
+            if(chapterSummary.linkedParentChapters.length>0){
+                let maxLikes = -1;
+                let mostLikedChapter = "";
+                for(let i =0; i<chapterSummary.linkedParentChapters.length ;i++){
+                    let chapter = Chapter(chapterSummary.linkedParentChapters[i]);
+                    let likeCount = Number(await chapter.methods.likeCount().call());
+                    if(likeCount>maxLikes){
+                        maxLikes = likeCount;
+                        mostLikedChapter = chapterSummary.linkedParentChapters[i];
+                    }
+                }
+                fetchChapter(mostLikedChapter);
+            }
+            
 
         }catch (error) {
             console.error('Error fetching chapter info:', error);
@@ -256,68 +284,6 @@ const ViewStory = ({storyAddress}) => {
         
 
     }
-
-    const fetchSisterChapter = async (direction) => { //direction is a number. 1 represents next. 0 represents previous.
-        try {
-            let newIndex;
-            const currentIndex = sisterChapters.indexOf(currentChapter);
-
-            if (direction === 1) { // Fetch next sister chapter
-                newIndex = currentIndex === sisterChapters.length - 1 ? currentIndex : currentIndex + 1;
-            } else if (direction === 0) { // Fetch previous sister chapter
-                newIndex = currentIndex === 0 ? 0 : currentIndex - 1;
-            } else {
-                console.error('Invalid direction. Please provide 1 for next chapter or 0 for previous chapter.');
-                return;
-            }
-            const newChapterAddress = sisterChapters[newIndex];
-            fetchChapter(newChapterAddress);
-        } catch (error) {
-            console.error('Error fetching sister chapter info:', error);
-        }
-    };
-
-    /*
-    const checkDirections = (found) => {
-        if(found[4].length === 0){
-            setHasChildChapters(false);
-        }
-        else{
-            setHasChildChapters(true);
-        }
-        if(found[3].length === 0){
-            setHasParentChapters(false);
-        }
-        else{
-            setHasParentChapters(true);
-        }
-        const currentIndex = sisterChapters.indexOf(currentChapter);
-        console.log(currentIndex);
-        if(currentIndex < sisterChapters.length && currentIndex > 0){
-            setHasSisterChapters1(true);
-            setHasSisterChapters2(true);
-        }else{
-            if(currentIndex === 0){
-                setHasSisterChapters1(true);
-                setHasSisterChapters2(false);
-            }else{
-                if(currentIndex === sisterChapters.length){
-                    setHasSisterChapters1(false);
-                    setHasSisterChapters2(true);
-                }
-                else{
-                    setHasSisterChapters1(false);
-                    setHasSisterChapters2(false);
-                }
-            }
-        }
-
-
-    }
-    */
-
-   
-    
     const handleLike = async (event) => {
         event.preventDefault();
         setLoadingLike(true);
@@ -446,46 +412,55 @@ const ViewStory = ({storyAddress}) => {
         <Layout  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         
             <Card style={{ height: '80vh', width: '100%', maxWidth: '100vw', marginBottom: '10px', textAlign: 'center' }}>
-                <Card.Body>
+                <Card.Header>"hi"</Card.Header>
+                <Card.Body style={{maxHeight:'100%',overflow:'auto'  }} >
+                {toggleView==="Chapter View" ? 
+                    <>
                     <Card.Title>{"Chapter: " + chapterSummary.title} <br/> {authorUsernames} <br/> {chapterSummary.likeCount>0 ? chapterSummary.likeCount+" likes" : ""}</Card.Title>
-                    {chapterSummary && chapterSummary.ipfsHash && ( 
-                        <Files chapterCid={chapterSummary.ipfsHash} />)}
-                    
+                    <Card.Text style={{height: '100%'}}>
+                        {chapterSummary && chapterSummary.ipfsHash && ( 
+                            <Files chapterCid={chapterSummary.ipfsHash} />)}
+                    </Card.Text>
+                    </>
+                    :
+                    <RenderGraph allChapters={allChapters}/>      
+                }
                 </Card.Body>
-                <Card.Footer style={{marginBottom: '10px', overflowWrap: 'break-word', wordWrap: 'break-word' }}>
-                    <br></br>
-                    <Button variant="primary" onClick={fetchParentChapters} className="mr-2 mb-2">
-                        <i className="bi bi-arrow-up"></i> 
-                    </Button>
-                    <br></br>
-                    <Button variant="primary" onClick={() => fetchSisterChapter(1)} className="mr-2 mb-2" style={{marginRight: "10px"}}>
+                <Card.Footer style={{ overflowWrap: 'break-word', wordWrap: 'break-word' }}>
+                {toggleView === "Chapter View" ? 
+                    <>
+                    <Button variant="primary"  onClick={() => fetchPreviousChapter()} className="mr-2 mb-2" style={{marginRight: "10px"}}>
                         <i className="bi bi-arrow-left"></i> 
                     </Button>
-                    <Button variant="primary" onClick={() => fetchSisterChapter(0)} className="mr-2 mb-2">
+                    <Button variant="primary" onClick={() => fetchNextChapter()} className="mr-2 mb-2" style={{marginRight: "800px"}}>
                         <i className="bi bi-arrow-right"></i> 
                     </Button>
-                    <br></br>
-                    <Button variant="primary" onClick={fetchChildChapters} className="mb-2">
-                        <i className="bi bi-arrow-down"></i> 
-                    </Button>
-                    </Card.Footer>
-            </Card>
-            <>
-                <Row className="mb-3">
-                <Col xs="auto">
-                    <Button variant='success' disabled={loadingLike} onClick={handleLike} style={{marginRight: "10px"}}>
                     {loadingLike ?
-                            <Spinner
+                        <Spinner
                             as="span"
                             animation="border"
                             size="sm"
                             role="status"
                             aria-hidden="true"
-                            /> :
-                            "Like Chapter"
-                        }
+                        /> :
+                        <HandThumbsUp
+                            size={30}
+                            style={{marginRight: "10px", marginBottom: '5px'}}
+                            color={loadingLike ? "gray" : "#007bff"}
+                            disabled={loadingLike}
+                            onClick={loadingLike ? null : handleLike}
+                    />}
+                    </>
+                        :
+                    <></>
+                    }
+                    <Button variant="secondary" onClick={() => handleToggleView()} className="mr-2 mb-2">
+                        {toggleView === "Chapter View" ? "Tree View" : "Chapter View"}
                     </Button>
-                </Col>
+                </Card.Footer>
+            </Card>
+            <>
+                <Row className="mb-3">
                 <Col xs="auto">
                     <Button variant="primary" onClick={handleContribute}>
                     {loadingContribute ?
@@ -593,9 +568,7 @@ const ViewStory = ({storyAddress}) => {
                         </Button>
                     </Modal.Footer>
                 </Modal>
-                
             </>
-            <RenderGraph allChapters={allChapters}/>         
         </Layout>
     );
 };
