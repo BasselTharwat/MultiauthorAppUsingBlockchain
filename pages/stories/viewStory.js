@@ -4,12 +4,14 @@ import Story from '../../ethereum/story.js';
 import Chapter from '../../ethereum/chapter.js'
 import web3 from '../../ethereum/web3.js';
 import { useRouter } from 'next/router';
-import { Card, Button, Modal, Form, Spinner, Row, Col, Container } from 'react-bootstrap';
+import { Card, Button, Modal, Form, Spinner, Row, Col, Dropdown } from 'react-bootstrap';
 import { Link } from '../../routes.js';
 import Files from '../../components/Files.jsx';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import factory from '../../ethereum/factory.js';
-import { HandThumbsUpFill, HandThumbsUp  } from 'react-bootstrap-icons';
+import { HandThumbsUpFill, HandThumbsUp, ThreeDotsVertical  } from 'react-bootstrap-icons';
+
+
 
 
 import RenderGraph from '../../components/renderGraph.js';
@@ -19,8 +21,9 @@ const ViewStory = ({storyAddress}) => {
 
     
     const story = Story(storyAddress);
+    const router = useRouter();
 
-    const [show, setShow] = useState(false);
+
     const [storySummary, setStorySummary] = useState({mainAuthor: "",
                                                     title: "",
                                                     genre: "",
@@ -56,6 +59,11 @@ const ViewStory = ({storyAddress}) => {
     const [contributionAmount, setContributionAmount] = useState(0);
     const [loadingContribute, setLoadingContribute] = useState(false);
     const [loadingDispense, setLoadingDispense] = useState(false);
+
+    const [showCreateRequest, setShowCreateRequest] = useState(false);
+    const [showContribute, setShowContribute] = useState(false);
+    const [showReport, setShowReport] = useState(false);
+    const [showDispenseRewards, setShowDispenseRewards] = useState(false);
 
     const [toggleView, setToggleView] = useState("Tree View"); //Chapter View or Tree View
 
@@ -184,8 +192,17 @@ const ViewStory = ({storyAddress}) => {
         setIsAuthor(isAuthorBool);
     }
 
-    const handleClose = () => setShow(false);
-    const handleShow = () => setShow(true);
+    const handleCloseCreateRequest = () => setShowCreateRequest(false);
+    const handleShowCreateRequest = () => setShowCreateRequest(true); 
+
+    const handleCloseContribute = () => setShowContribute(false);
+    const handleShowContribute = () => setShowContribute(true); 
+
+    const handleCloseReport = () => setShowReport(false);
+    const handleShowReport = () => setShowReport(true);
+
+    const handleCloseDispenseRewards = () => setShowDispenseRewards(false);
+    const handleShowDispenseRewards = () => setShowDispenseRewards(true);
     
 
 
@@ -411,9 +428,55 @@ const ViewStory = ({storyAddress}) => {
     return(
         <Layout  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         
-            <Card style={{ height: '80vh', width: '100%', maxWidth: '100vw', marginBottom: '10px', textAlign: 'center' }}>
-                <Card.Header>"hi"</Card.Header>
-                <Card.Body style={{maxHeight:'100%',overflow:'auto'  }} >
+            <Card style={{ height: '80vh', width: '100%', maxWidth: '100vw', marginBottom: '10px' }}>
+                <Card.Header style={{textAlign: 'right'}}>
+                    <Dropdown>
+                        <Dropdown.Toggle
+                            variant="secondary"
+                            id="dropdown-basic"
+                            as={ThreeDotsVertical} 
+                            style={{ cursor: 'pointer' }} 
+                        />
+                        <Dropdown.Menu>
+                            {isAuthor==true ?
+                            <> 
+                                <Dropdown.Item onClick={() => router.push(`/stories/${storyAddress}/viewRequestsToJoin`)}>
+                                    View requests to join
+                                </Dropdown.Item>
+                                <Dropdown.Item onClick={() => router.push(`/stories/${storyAddress}/newChapter`)}>
+                                    Add a new chapter
+                                </Dropdown.Item>
+                                <Dropdown.Item onClick={handleShowDispenseRewards}>
+                                    Dispense Rewards!
+                                </Dropdown.Item>
+                            </>
+                            :
+                            <>
+                                <Dropdown.Item onClick={handleShowCreateRequest}>
+                                Create a request to join
+                                </Dropdown.Item>
+                                <Dropdown.Item onClick={handleShowContribute}>
+                                Contribute
+                                </Dropdown.Item>
+                                <Dropdown.Item onClick={handleShowReport}>
+                                Report Story
+                                </Dropdown.Item>
+                            </>
+
+                            }
+                            
+ 
+                            
+                            
+                            
+                        </Dropdown.Menu>
+                    </Dropdown>
+
+
+
+
+                </Card.Header>
+                <Card.Body style={{maxHeight:'100%',overflow:'auto', textAlign: 'center'  }} >
                 {toggleView==="Chapter View" ? 
                     <>
                     <Card.Title>{"Chapter: " + chapterSummary.title} <br/> {authorUsernames} <br/> {chapterSummary.likeCount>0 ? chapterSummary.likeCount+" likes" : ""}</Card.Title>
@@ -426,13 +489,13 @@ const ViewStory = ({storyAddress}) => {
                     <RenderGraph allChapters={allChapters}/>      
                 }
                 </Card.Body>
-                <Card.Footer style={{ overflowWrap: 'break-word', wordWrap: 'break-word' }}>
+                <Card.Footer style={{ overflowWrap: 'break-word', wordWrap: 'break-word', textAlign: 'right' }}>
                 {toggleView === "Chapter View" ? 
                     <>
                     <Button variant="primary"  onClick={() => fetchPreviousChapter()} className="mr-2 mb-2" style={{marginRight: "10px"}}>
                         <i className="bi bi-arrow-left"></i> 
                     </Button>
-                    <Button variant="primary" onClick={() => fetchNextChapter()} className="mr-2 mb-2" style={{marginRight: "800px"}}>
+                    <Button variant="primary" onClick={() => fetchNextChapter()} className="mr-2 mb-2" style={{marginRight: "850px"}}>
                         <i className="bi bi-arrow-right"></i> 
                     </Button>
                     {loadingLike ?
@@ -460,78 +523,10 @@ const ViewStory = ({storyAddress}) => {
                 </Card.Footer>
             </Card>
             <>
-                <Row className="mb-3">
-                <Col xs="auto">
-                    <Button variant="primary" onClick={handleContribute}>
-                    {loadingContribute ?
-                            <Spinner
-                            as="span"
-                            animation="border"
-                            size="sm"
-                            role="status"
-                            aria-hidden="true"
-                            /> :
-                            "Contribute to Story"
-                        }
-                    </Button>
-                </Col>
-                <Col xs="auto">
-                    <Form.Group controlId="contributionAmount">
-                        <Form.Control
-                            type="number"
-                            placeholder="Enter amount in Ether"
-                            value={contributionAmount}
-                            onChange={(e) => setContributionAmount(e.target.value)}
-                        />
-                    </Form.Group>
-                </Col>
-                </Row>
-                <br></br>
-                <Button variant="primary" onClick={handleShow} style={{marginTop: "10px" , marginRight: "10px"}}>
-                    Create a request to join
-                </Button>
-                <br></br>
-                <Link route={`/stories/${storyAddress}/viewRequestsToJoin`}>
-                    <Button variant='secondary' disabled={!isAuthor} style={{marginTop: "10px", marginRight: "10px"}}>
-                    {"View Requests To Join (Only for authors)"}
-                    </Button>
-                </Link>
-                <Link route={`/stories/${storyAddress}/newChapter`}>
-                    <Button variant='secondary' disabled={!isAuthor} style={{marginTop: "10px", marginRight: "10px"}}>
-                    {"Create a New Chapter (Only for authors)"}
-                    </Button>
-                </Link>
-                <Button variant="secondary" disabled={!isAuthor} onClick={handleDispenseRewards} style={{marginTop: "10px", marginRight: "10px"}}>
-                {loadingDispense ?
-                        <Spinner
-                        as="span"
-                        animation="border"
-                        size="sm"
-                        role="status"
-                        aria-hidden="true"
-                        /> :
-                        "Dispense Rewards"
-                    }
-                </Button>
-                <br></br>
-                
-                <Button variant='danger' disabled={loadingReport} onClick={handleReport} style={{marginTop: "10px", marginRight: "10px"}}>
-                {loadingReport ?
-                        <Spinner
-                        as="span"
-                        animation="border"
-                        size="sm"
-                        role="status"
-                        aria-hidden="true"
-                        /> :
-                        "Report Story"
-                    }
-                </Button>
-                
 
 
                 
-                <Modal show={show} onHide={handleClose}>
+                <Modal show={showCreateRequest} onHide={handleCloseCreateRequest}>
                     <Modal.Header closeButton>
                         <Modal.Title>Write your proposal here to join the authors</Modal.Title>
                     </Modal.Header>
@@ -553,9 +548,6 @@ const ViewStory = ({storyAddress}) => {
                     </Form.Group>}
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="secondary" onClick={handleClose}>
-                            Close
-                        </Button>
                         <Button variant="primary" onClick={handleCreateRequest}>
                             {loadingCreateRequest && <Spinner
                                 as="span"
@@ -568,6 +560,74 @@ const ViewStory = ({storyAddress}) => {
                         </Button>
                     </Modal.Footer>
                 </Modal>
+
+                <Modal show={showContribute} onHide={handleCloseContribute}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Enter the contribution amount</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <Form.Group controlId="contributionAmount">
+                            <Form.Control
+                                type="number"
+                                placeholder="Enter amount in Ether"
+                                value={contributionAmount}
+                                onChange={(e) => setContributionAmount(e.target.value)}
+                            />
+                        </Form.Group>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="primary" onClick={handleContribute}>
+                            {loadingContribute && <Spinner
+                                as="span"
+                                animation="border"  
+                                size="sm"
+                                role="status"
+                                aria-hidden="true"
+                                />}
+                            {!loadingContribute && "Contribute" }
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+
+                <Modal show={showReport} onHide={handleCloseReport}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Are you sure you want to report story?</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>If reports increase alarmingly, the story gets shut down!</Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="danger" onClick={handleReport}>
+                            {loadingReport && <Spinner
+                                as="span"
+                                animation="border"  
+                                size="sm"
+                                role="status"
+                                aria-hidden="true"
+                                />}
+                            {!loadingReport && "Report" }
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+
+                <Modal show={showDispenseRewards} onHide={handleCloseDispenseRewards}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Are you sure you want to dispense rewards?</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>Total funds gained from user contributions are divided and distributed equally among this story's authors.
+                        If there are no funds, you get no rewards!
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="success" onClick={handleDispenseRewards}>
+                            {loadingDispense && <Spinner
+                                as="span"
+                                animation="border"  
+                                size="sm"
+                                role="status"
+                                aria-hidden="true"
+                                />}
+                            {!loadingDispense && "Dispense" }
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
             </>
         </Layout>
     );
@@ -576,6 +636,7 @@ const ViewStory = ({storyAddress}) => {
 export default ViewStory;
 
 export async function getServerSideProps(context) {
+
     return {
         props: {
             storyAddress: context.query.address
