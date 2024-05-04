@@ -70,8 +70,9 @@ const NewChapter = ({storyAddress}) => {
 
   return (
     <Layout>
-      <h5>Here, you can add your new chapter. You can add a text file, video, audio... you name it.</h5>
+      
       <br></br>
+
 
       <div>
         <Form.Group>

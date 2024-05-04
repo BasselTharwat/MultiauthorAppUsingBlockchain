@@ -1,14 +1,13 @@
-import React from 'react';
-import Graph from 'react-graph-vis';
+import React, { useState } from 'react';
+import  Graph  from 'react-graph-vis';
 
 const RenderGraph = (props) => {
-
-    const { allChapters } = props;
+    const { allChapters, onNodeSelect } = props;
 
     // Create nodes and edges dynamically
     const nodes = allChapters.map((chapter, index) => ({
         id: chapter.address,
-        title: chapter[2], 
+        label: chapter[2], 
         ipfsHash: chapter[3] 
     }));
 
@@ -44,17 +43,24 @@ const RenderGraph = (props) => {
         },
         height: "100%",
         interaction: {
-            zoomView: false, // Disable zooming
-            dragView: true // Enable dragging
+            zoomView: true, 
+            dragView: true 
+        },
+        nodes: {
+            shape: 'box',
+            font: {
+                size: 18 
+            }
+            
         }
     };
 
     const events = {
         select: function(event) {
-            const { nodeId } = event;
+            const { nodes } = event;
             if (nodes.length > 0) {
-                const nodeId = nodes[0]; // Get the ID of the first selected node
-                console.log("Selected node ID:", nodeId);
+                const selectedNode = nodes[0]; // Get the ID of the first selected node
+                onNodeSelect(selectedNode); // Call the callback function with the selected node ID
             }
         }
     };

@@ -23,6 +23,8 @@ const ViewStory = ({storyAddress}) => {
     const story = Story(storyAddress);
     const router = useRouter();
 
+    const [isClient, setIsClient] = useState(false);
+
 
     const [storySummary, setStorySummary] = useState({mainAuthor: "",
                                                     title: "",
@@ -413,12 +415,20 @@ const ViewStory = ({storyAddress}) => {
         }
     };
        
+
+    const handleNodeSelect = (selectedNodeId) => {
+        console.log(selectedNodeId);
+        fetchChapter(selectedNodeId);
+        setToggleView("Chapter View");
+        
+    };
   
 
 
 
 
     useEffect(() => {
+        setIsClient(true);
         isAuthorCall();
         fetchStoryInfo();
 
@@ -462,19 +472,9 @@ const ViewStory = ({storyAddress}) => {
                                 Report Story
                                 </Dropdown.Item>
                             </>
-
-                            }
-                            
- 
-                            
-                            
-                            
+                        }                           
                         </Dropdown.Menu>
                     </Dropdown>
-
-
-
-
                 </Card.Header>
                 <Card.Body style={{maxHeight:'100%',overflow:'auto', textAlign: 'center'  }} >
                 {toggleView==="Chapter View" ? 
@@ -486,8 +486,10 @@ const ViewStory = ({storyAddress}) => {
                     </Card.Text>
                     </>
                     :
-                    <RenderGraph allChapters={allChapters}/>      
-                }
+                    isClient && <RenderGraph allChapters={allChapters} onNodeSelect={handleNodeSelect} suppressHydrationWarning={true}/>  
+                    }
+                    
+                
                 </Card.Body>
                 <Card.Footer style={{ overflowWrap: 'break-word', wordWrap: 'break-word', textAlign: 'right' }}>
                 {toggleView === "Chapter View" ? 
@@ -524,8 +526,6 @@ const ViewStory = ({storyAddress}) => {
             </Card>
             <>
 
-
-                
                 <Modal show={showCreateRequest} onHide={handleCloseCreateRequest}>
                     <Modal.Header closeButton>
                         <Modal.Title>Write your proposal here to join the authors</Modal.Title>
