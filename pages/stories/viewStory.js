@@ -406,7 +406,7 @@ const ViewStory = ({storyAddress}) => {
             const usernames = [];
             for (let i = 0; i < authorAddresses.length; i++) {
                 const username = await factory.methods.authorUsernames(authorAddresses[i]).call();
-                usernames.push(username);
+                usernames.push(" "+ username);
             }
 
             setAuthorUsernames(usernames);
@@ -417,7 +417,6 @@ const ViewStory = ({storyAddress}) => {
        
 
     const handleNodeSelect = (selectedNodeId) => {
-        console.log(selectedNodeId);
         fetchChapter(selectedNodeId);
         setToggleView("Chapter View");
         

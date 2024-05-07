@@ -50,8 +50,7 @@ const RenderGraph = (props) => {
             shape: 'box',
             font: {
                 size: 18 
-            }
-            
+            },
         }
     };
 
