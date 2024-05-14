@@ -4,6 +4,7 @@ const routes = require('next-routes')();
 routes
     .add('/stories/:address', 'stories/viewStory')
     .add('/stories/:address/viewRequestsToJoin', 'stories/viewRequestsToJoin')
+    .add('/stories/:address/viewRequestsToBuy', 'stories/viewRequestsToBuy')
     .add('/stories/:address/newChapter', 'stories/newChapter')
     .add('/createStory','createStory')
 

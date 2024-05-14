@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 require('dotenv').config({path: '../.env'});
-import { Card } from "react-bootstrap";
 
 const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL
   ? process.env.NEXT_PUBLIC_GATEWAY_URL

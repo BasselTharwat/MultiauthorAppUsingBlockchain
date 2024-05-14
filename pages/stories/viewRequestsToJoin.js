@@ -37,7 +37,7 @@ const ViewRequestsToJoin = ({storyAddress}) => {
         const newUsernameState = {};
         await Promise.all(
             requestsToJoin.map(async (request, index) => {
-                const username = await factory.methods.authorUsernames(request[2]).call();
+                const username = await factory.methods.authorUsernames(request[1]).call();
                 newUsernameState[index] = username;
             })
         );
@@ -51,20 +51,6 @@ const ViewRequestsToJoin = ({storyAddress}) => {
     useEffect(() => {
         fetchUsernames();
     }, [requestsToJoin]);
-
-    function interpretTimestamp(foundTimestamp){
-        // Convert the Unix timestamp to milliseconds (Unix timestamps are in seconds)
-        const milliseconds = Number(foundTimestamp) * 1000;
-        // Create a new Date object with the converted milliseconds
-        const date = new Date(milliseconds);
-        // Use the Date object's methods to get the desired date and time components
-        const year = date.getFullYear();
-        const month = date.getMonth() + 1; // Month index starts from 0, so add 1
-        const day = date.getDate();
-        // Construct the formatted date string in "dd/mm/yy" format
-        const formattedDate = `${day}/${month}/${year.toString().slice(-2)}`;
-        return formattedDate;
-    }
 
     const handleVoteClick = async (index) => {
         setVoteLoading(true);
@@ -96,7 +82,6 @@ const ViewRequestsToJoin = ({storyAddress}) => {
                 <thead>
                     <tr>
                         <th>Proposal</th>
-                        <th>Timestamp</th>
                         <th>Author</th>
                         <th>Aprrovers Count</th>
                         <th>Status</th>
@@ -107,7 +92,6 @@ const ViewRequestsToJoin = ({storyAddress}) => {
                 {requestsToJoin.map((request, index) => (
                     <tr key={index}>
                         <td>{request[0]}</td>
-                        <td>{interpretTimestamp(Number(request[1]))}</td>
                         <td>{usernames[index]}</td>
                         <td>{request[4].toString() === "true" ? "All have Voted" : Number(request[3]) +"/"+ authorsCount}</td>
                         <td>{request[4].toString() === "true" ? "accepted" : "not accepted"}</td>

@@ -22,8 +22,9 @@ const StoryIndex = ({ stories }) => {
                                     <Card.Body className="d-flex flex-column">
                                         <Card.Title className="text-truncate" style={{ maxWidth: "100%" }}>{story.title}</Card.Title>
                                         <Card.Text className="text-truncate" style={{ maxWidth: "100%", flex: "1 1 auto" }}>{story.mainIdea}</Card.Text>
+                                        <Card.Footer className='text-truncate' style={{ maxWidth: "100%" }}>{story.genre}</Card.Footer>
                                         <Link route={`/stories/${story.storyAddress}`}>
-                                            <Button variant="secondary">Read Story</Button>
+                                            <Button style={{marginTop: '10px'}} variant="secondary">Read Story</Button>
                                         </Link>
                                     </Card.Body>
                                 </Card>
@@ -55,17 +56,19 @@ export async function getServerSideProps() {
             const summary = await story.methods.getSummary().call();
             return {
                 storyAddress: address,
-                mainAuthor: summary[0],
-                title: summary[1],
-                genre: summary[2],
-                mainIdea: summary[3],
-                authors: summary[4].length,
-                chapters: summary[5].length,
-                requestsToJoinCount: Number(summary[6]),
-                reportersCount: Number(summary[7]),
-                reported: summary[8],
-                balance: Number(summary[9]),
-                coverPhotoIpfsHash: summary[10] // Assuming this is where the cover photo IPFS hash is stored
+                title: summary[0],
+                genre: summary[1],
+                mainIdea: summary[2],
+                authors: summary[3],
+                chapters: summary[4],
+                requestsToJoinCount: Number(summary[5]),
+                reportersCount: Number(summary[6]),
+                reported: summary[7],
+                coverPhotoIpfsHash: summary[8],
+                requestsToBuyCount: Number(summary[9]),
+                bought: summary[10],
+                owner: summary[11]
+
             };
         }));
         return {

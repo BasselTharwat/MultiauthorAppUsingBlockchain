@@ -26,7 +26,7 @@ const ViewStory = ({storyAddress}) => {
     const [isClient, setIsClient] = useState(false);
 
 
-    const [storySummary, setStorySummary] = useState({mainAuthor: "",
+    const [storySummary, setStorySummary] = useState({
                                                     title: "",
                                                     genre: "",
                                                     mainIdea: "",
@@ -35,8 +35,10 @@ const ViewStory = ({storyAddress}) => {
                                                     requestsToJoin: 0,
                                                     reportersCount: 0,
                                                     reported: false,
-                                                    balance: 0,
-                                                    coverPhoto: ""});
+                                                    coverPhoto: "",
+                                                    requestsToBuy: 0,
+                                                    bought: false,
+                                                    owner: ""});
     const [allChapters, setAllChapters] = useState([]);
 
     
@@ -58,15 +60,8 @@ const ViewStory = ({storyAddress}) => {
     const [requestUsername, setRequestUsername] = useState("");
     const [loadingLike, setLoadingLike] = useState(false);
     const [loadingReport, setLoadingReport] = useState(false);
-    const [contributionAmount, setContributionAmount] = useState(0);
-    const [loadingContribute, setLoadingContribute] = useState(false);
-    const [loadingDispense, setLoadingDispense] = useState(false);
-
     const [showCreateRequest, setShowCreateRequest] = useState(false);
-    const [showContribute, setShowContribute] = useState(false);
     const [showReport, setShowReport] = useState(false);
-    const [showDispenseRewards, setShowDispenseRewards] = useState(false);
-
     const [toggleView, setToggleView] = useState("Tree View"); //Chapter View or Tree View
 
 
@@ -159,23 +154,25 @@ const ViewStory = ({storyAddress}) => {
             const found = await story.methods.getSummary().call();
             
             setStorySummary({
-                mainAuthor: found[0],
-                title: found[1],
-                genre: found[2],
-                mainIdea: found[3],
-                authors: found[4],
-                chapters: found[5],
-                requestsToJoin: Number(found[6]),
-                reportersCount: Number(found[7]),
-                reported: found[8],
-                balance: Number(found[9]),
-                coverPhoto: found[10]
+                title: found[0],
+                genre: found[1],
+                mainIdea: found[2],
+                authors: found[3],
+                chapters: found[4],
+                requestsToJoin: Number(found[5]),
+                reportersCount: Number(found[6]),
+                reported: found[7],
+                coverPhoto: found[8],
+                requestsToBuy: Number(found[9]),
+                bought: found[10],
+                owner: found[11]
             });
 
             if(found[5].length>0){
                 setCurrentChapter(found[5][0]);
             }
 
+            isAuthorCall(found[3]);
             fetchChapter(found[5][0]);
             fetchAuthorNames(found[4]);
             fetchAllChapters(found[5]);
@@ -186,27 +183,16 @@ const ViewStory = ({storyAddress}) => {
         }
     }
 
-    async function isAuthorCall(){
+    async function isAuthorCall(authors){
         const accounts = await web3.eth.getAccounts();
-        const isAuthorBool = await story.methods.isAuthor().call({
-            from: accounts[0]
-        });
-        setIsAuthor(isAuthorBool);
+        setIsAuthor(authors.includes(accounts[0]));
     }
 
     const handleCloseCreateRequest = () => setShowCreateRequest(false);
     const handleShowCreateRequest = () => setShowCreateRequest(true); 
 
-    const handleCloseContribute = () => setShowContribute(false);
-    const handleShowContribute = () => setShowContribute(true); 
-
     const handleCloseReport = () => setShowReport(false);
     const handleShowReport = () => setShowReport(true);
-
-    const handleCloseDispenseRewards = () => setShowDispenseRewards(false);
-    const handleShowDispenseRewards = () => setShowDispenseRewards(true);
-    
-
 
     const fetchAllChapters = async (foundChapters) => {
         try{
@@ -353,53 +339,6 @@ const ViewStory = ({storyAddress}) => {
 
     } 
 
-    const handleContribute = async (event) => {
-        event.preventDefault();
-        setLoadingContribute(true);
-        try {
-            const accounts = await web3.eth.getAccounts();
-            const gasEstimate = await story.methods.contribute().estimateGas({
-                from: accounts[0],
-                value: web3.utils.toWei(contributionAmount, 'ether')
-            });
-            const encode = await story.methods.contribute().encodeABI();
-    
-            await story.methods.contribute().send({
-                from: accounts[0],
-                value: web3.utils.toWei(contributionAmount, 'ether'),
-                gas: gasEstimate.toString(),
-                data: encode
-            });
-
-        }catch(error) {
-            console.error('Error contributing to the story:', error);
-        }
-        setContributionAmount(0);
-        setLoadingContribute(false);
-    };
-
-    const handleDispenseRewards = async (event) => {
-        event.preventDefault();
-        setLoadingDispense(true);
-        try {
-            const accounts = await web3.eth.getAccounts();
-            const gasEstimate = await story.methods.dispenseRewards().estimateGas({
-                from: accounts[0]
-            });
-            const encode = await story.methods.dispenseRewards().encodeABI();
-    
-            await story.methods.dispenseRewards().send({
-                from: accounts[0],
-                gas: gasEstimate.toString(),
-                data: encode
-            });
-
-        }catch(error) {
-            console.error('Error dispensing the rewards:', error);
-        }
-        setLoadingDispense(false);
-        
-    };
 
     const fetchAuthorNames = async (authorAddresses) => {
         try {
@@ -428,7 +367,6 @@ const ViewStory = ({storyAddress}) => {
 
     useEffect(() => {
         setIsClient(true);
-        isAuthorCall();
         fetchStoryInfo();
 
     }, []);
@@ -449,14 +387,14 @@ const ViewStory = ({storyAddress}) => {
                         <Dropdown.Menu>
                             {isAuthor==true ?
                             <> 
-                                <Dropdown.Item onClick={() => router.push(`/stories/${storyAddress}/viewRequestsToJoin`)}>
-                                    View requests to join
-                                </Dropdown.Item>
                                 <Dropdown.Item onClick={() => router.push(`/stories/${storyAddress}/newChapter`)}>
                                     Add a new chapter
                                 </Dropdown.Item>
-                                <Dropdown.Item onClick={handleShowDispenseRewards}>
-                                    Dispense Rewards!
+                                <Dropdown.Item onClick={() => router.push(`/stories/${storyAddress}/viewRequestsToJoin`)}>
+                                    View requests to join
+                                </Dropdown.Item>
+                                <Dropdown.Item onClick={() => router.push(`/stories/${storyAddress}/viewRequestsToBuy`)}>
+                                    View requests to own
                                 </Dropdown.Item>
                             </>
                             :
@@ -464,8 +402,8 @@ const ViewStory = ({storyAddress}) => {
                                 <Dropdown.Item onClick={handleShowCreateRequest}>
                                 Create a request to join
                                 </Dropdown.Item>
-                                <Dropdown.Item onClick={handleShowContribute}>
-                                Contribute
+                                <Dropdown.Item onClick={() => router.push(`/stories/${storyAddress}/viewRequestsToBuy`)}>
+                                Request to own story 
                                 </Dropdown.Item>
                                 <Dropdown.Item onClick={handleShowReport}>
                                 Report Story
@@ -560,33 +498,7 @@ const ViewStory = ({storyAddress}) => {
                     </Modal.Footer>
                 </Modal>
 
-                <Modal show={showContribute} onHide={handleCloseContribute}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Enter the contribution amount</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Form.Group controlId="contributionAmount">
-                            <Form.Control
-                                type="number"
-                                placeholder="Enter amount in Ether"
-                                value={contributionAmount}
-                                onChange={(e) => setContributionAmount(e.target.value)}
-                            />
-                        </Form.Group>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="primary" onClick={handleContribute}>
-                            {loadingContribute && <Spinner
-                                as="span"
-                                animation="border"  
-                                size="sm"
-                                role="status"
-                                aria-hidden="true"
-                                />}
-                            {!loadingContribute && "Contribute" }
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
+                
 
                 <Modal show={showReport} onHide={handleCloseReport}>
                     <Modal.Header closeButton>
@@ -606,27 +518,6 @@ const ViewStory = ({storyAddress}) => {
                         </Button>
                     </Modal.Footer>
                 </Modal>
-
-                <Modal show={showDispenseRewards} onHide={handleCloseDispenseRewards}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Are you sure you want to dispense rewards?</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>Total funds gained from user contributions are divided and distributed equally among this story's authors.
-                        If there are no funds, you get no rewards!
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="success" onClick={handleDispenseRewards}>
-                            {loadingDispense && <Spinner
-                                as="span"
-                                animation="border"  
-                                size="sm"
-                                role="status"
-                                aria-hidden="true"
-                                />}
-                            {!loadingDispense && "Dispense" }
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
             </>
         </Layout>
     );
@@ -642,4 +533,3 @@ export async function getServerSideProps(context) {
         }
     };
 }
-
