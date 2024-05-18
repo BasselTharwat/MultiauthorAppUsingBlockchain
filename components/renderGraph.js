@@ -7,7 +7,7 @@ const RenderGraph = (props) => {
     // Create nodes and edges dynamically
     const nodes = allChapters.map((chapter, index) => ({
         id: chapter.address,
-        label: chapter[2], 
+        label: Number(chapter[6])>0 ? chapter[2] + "\n" + "(" + Number(chapter[6]) + " likes" + ")": chapter[2],
         ipfsHash: chapter[3] 
     }));
 
