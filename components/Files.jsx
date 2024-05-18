@@ -55,7 +55,7 @@ export default function Files(props) {
       )}
       {fileType === 'image' && fileContent && (
         <div className="d-flex justify-content-center align-items-center">
-          <img src={fileContent} alt="Image" style={{ maxWidth: '100%', maxHeight: '100%' }} />
+          <img src={fileContent} alt="Image" style={{ maxWidth: '100%', maxHeight: '100%', height:"250px" }} />
         </div>
       )}
       {fileType === 'audio' && fileContent && (

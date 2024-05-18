@@ -28,17 +28,15 @@ const ViewStory = ({storyAddress}) => {
 
     const [storySummary, setStorySummary] = useState({
                                                     title: "",
-                                                    genre: "",
                                                     mainIdea: "",
                                                     authors: [],
                                                     chapters: [],
                                                     requestsToJoin: 0,
-                                                    reportersCount: 0,
-                                                    reported: false,
                                                     coverPhoto: "",
                                                     requestsToBuy: 0,
                                                     bought: false,
                                                     owner: ""});
+
     const [allChapters, setAllChapters] = useState([]);
 
     
@@ -59,10 +57,9 @@ const ViewStory = ({storyAddress}) => {
     const [showUsernamePrompt, setShowUsernamePrompt] = useState(false);
     const [requestUsername, setRequestUsername] = useState("");
     const [loadingLike, setLoadingLike] = useState(false);
-    const [loadingReport, setLoadingReport] = useState(false);
     const [showCreateRequest, setShowCreateRequest] = useState(false);
-    const [showReport, setShowReport] = useState(false);
     const [toggleView, setToggleView] = useState("Tree View"); //Chapter View or Tree View
+    const [owner, setOwner] = useState("");
 
 
     
@@ -152,30 +149,30 @@ const ViewStory = ({storyAddress}) => {
     async function fetchStoryInfo() {
         try {
             const found = await story.methods.getSummary().call();
-            
+            console.log(found);
+
             setStorySummary({
                 title: found[0],
-                genre: found[1],
-                mainIdea: found[2],
-                authors: found[3],
-                chapters: found[4],
-                requestsToJoin: Number(found[5]),
-                reportersCount: Number(found[6]),
-                reported: found[7],
-                coverPhoto: found[8],
-                requestsToBuy: Number(found[9]),
-                bought: found[10],
-                owner: found[11]
+                mainIdea: found[1],
+                authors: found[2],
+                chapters: found[3],
+                requestsToJoin: Number(found[4]),
+                coverPhoto: found[5],
+                requestsToBuy: Number(found[6]),
+                bought: found[7],
+                owner: found[8]
             });
 
-            if(found[5].length>0){
-                setCurrentChapter(found[5][0]);
+            if(found[3].length>0){
+                setCurrentChapter(found[3][0]);
             }
 
-            isAuthorCall(found[3]);
-            fetchChapter(found[5][0]);
-            fetchAuthorNames(found[4]);
-            fetchAllChapters(found[5]);
+            isAuthorCall(found[2]);
+            fetchChapter(found[3][0]);
+            fetchAuthorNames(found[2]);
+            fetchAllChapters(found[3]);
+            const ownerUsername = await factory.methods.authorUsernames(found[8]).call();
+            setOwner(ownerUsername);
             
 
         } catch (error) {
@@ -190,9 +187,6 @@ const ViewStory = ({storyAddress}) => {
 
     const handleCloseCreateRequest = () => setShowCreateRequest(false);
     const handleShowCreateRequest = () => setShowCreateRequest(true); 
-
-    const handleCloseReport = () => setShowReport(false);
-    const handleShowReport = () => setShowReport(true);
 
     const fetchAllChapters = async (foundChapters) => {
         try{
@@ -315,31 +309,6 @@ const ViewStory = ({storyAddress}) => {
 
     } 
 
-    const handleReport = async (event) => {
-        event.preventDefault();
-        setLoadingReport(true);
-        try {
-            const accounts = await web3.eth.getAccounts();
-            const gasEstimate = await story.methods.report().estimateGas({
-                from: accounts[0]
-            });
-            const encode = await story.methods.report().encodeABI();
-    
-            await story.methods.report().send({
-                from: accounts[0],
-                gas: gasEstimate.toString(),
-                data: encode
-            });
-
-        }catch(error) {
-            console.error('Error reporting the story:', error);
-        }
-        setLoadingReport(false);
-        
-
-    } 
-
-
     const fetchAuthorNames = async (authorAddresses) => {
         try {
             const usernames = [];
@@ -405,9 +374,6 @@ const ViewStory = ({storyAddress}) => {
                                 <Dropdown.Item onClick={() => router.push(`/stories/${storyAddress}/viewRequestsToBuy`)}>
                                 Request to own story 
                                 </Dropdown.Item>
-                                <Dropdown.Item onClick={handleShowReport}>
-                                Report Story
-                                </Dropdown.Item>
                             </>
                         }                           
                         </Dropdown.Menu>
@@ -416,7 +382,7 @@ const ViewStory = ({storyAddress}) => {
                 <Card.Body style={{maxHeight:'100%',overflow:'auto', textAlign: 'center'  }} >
                 {toggleView==="Chapter View" ? 
                     <>
-                    <Card.Title>{"Chapter: " + chapterSummary.title} <br/> {authorUsernames} <br/> {chapterSummary.likeCount>0 ? chapterSummary.likeCount+" likes" : ""}</Card.Title>
+                    <Card.Title>{"Chapter: " + chapterSummary.title} <br/> {owner === "" ? "By: " + authorUsernames :  "Owned By: " + owner} <br/> {chapterSummary.likeCount>0 ? chapterSummary.likeCount+" likes" : ""}</Card.Title>
                     <Card.Text style={{height: '100%'}}>
                         {chapterSummary && chapterSummary.ipfsHash && ( 
                             <Files chapterCid={chapterSummary.ipfsHash} />)}
@@ -494,27 +460,6 @@ const ViewStory = ({storyAddress}) => {
                                 aria-hidden="true"
                                 />}
                             {!loadingCreateRequest && "Create Request" }
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
-
-                
-
-                <Modal show={showReport} onHide={handleCloseReport}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Are you sure you want to report story?</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>If reports increase alarmingly, the story gets shut down!</Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="danger" onClick={handleReport}>
-                            {loadingReport && <Spinner
-                                as="span"
-                                animation="border"  
-                                size="sm"
-                                role="status"
-                                aria-hidden="true"
-                                />}
-                            {!loadingReport && "Report" }
                         </Button>
                     </Modal.Footer>
                 </Modal>

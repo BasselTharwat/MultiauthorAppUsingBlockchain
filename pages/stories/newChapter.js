@@ -69,7 +69,7 @@ const NewChapter = ({storyAddress}) => {
 
   const handleSubmit = () => {
     if (file) {
-      if(childChapter === parentChapter){
+      if(childChapter !="0x0000000000000000000000000000000000000000" && childChapter === parentChapter){
         alert("A chapter can not have the same parent and child chapters")
       }
       else{
@@ -92,7 +92,7 @@ const NewChapter = ({storyAddress}) => {
   async function fetchStoryInfo() {
     try {
         const found = await story.methods.getSummary().call();
-        fetchAllChapters(found[5]);
+        fetchAllChapters(found[3]);
     } catch (error) {
         console.error('Error fetching story info:', error);
     }

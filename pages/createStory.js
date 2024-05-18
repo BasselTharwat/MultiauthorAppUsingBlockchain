@@ -10,8 +10,7 @@ import Layout from '../components/layout.js';
 const CreateStory = () => {
     const [mainIdea, setMainIdea] = useState("");
     const [title, setTitle] = useState("");
-    const [genre, setGenre] = useState("");
-    const [coverPhotoFile, setCoverPhotoFile] = useState(null); // New state for cover photo
+    const [coverPhotoFile, setCoverPhotoFile] = useState(null); 
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [show, setShow] = useState(false);
@@ -28,11 +27,6 @@ const CreateStory = () => {
     const handleInputChangeTitle = (event) => {
         setTitle(event.target.value);
     };
-
-    const handleInputChangeGenre = (event) => {
-        setGenre(event.target.value);
-    };
-
     const handleUsernameInputChange = (event) => {
         setNewUsername(event.target.value);
     };
@@ -89,13 +83,22 @@ const CreateStory = () => {
 
                     coverPhotoIpfsHash = await response.text();
                 }
-                // Create a story on the blockchain
-                await factory.methods.createStory(title, genre, mainIdea, coverPhotoIpfsHash).send({
+
+                const gasEstimate = await factory.methods.createStory(title, mainIdea, coverPhotoIpfsHash).estimateGas({
                     from: accounts[0]
                 });
+        
+                const encode = await factory.methods.createStory(title, mainIdea, coverPhotoIpfsHash).encodeABI();
+        
+                await factory.methods.createStory(title, mainIdea, coverPhotoIpfsHash).send({
+                    from: accounts[0],
+                    gas: gasEstimate.toString(),
+                    data: encode
+                });
+    
+
                 setMainIdea("");
                 setTitle("");
-                setGenre("");
                 setCoverPhotoFile(null); // Clear cover photo file state
                 // Redirect to localhost:3000 after story creation
                 window.location.href = 'http://localhost:3000';
@@ -117,14 +120,6 @@ const CreateStory = () => {
                         type="text"
                         value={title}
                         onChange={handleInputChangeTitle}
-                    />
-                </Form.Group>
-                <Form.Group controlId="formGenre">
-                    <Form.Label style={{ marginTop: "10px" }}>Identify the genre</Form.Label>
-                    <Form.Control
-                        type="text"
-                        value={genre}
-                        onChange={handleInputChangeGenre}
                     />
                 </Form.Group>
                 <Form.Group controlId="formMainIdea">

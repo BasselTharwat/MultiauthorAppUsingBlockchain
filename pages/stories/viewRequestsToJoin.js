@@ -17,8 +17,8 @@ const ViewRequestsToJoin = ({storyAddress}) => {
     async function viewRequests() {
         try {
             const found = await story.methods.getSummary().call();
-            const requestsToJoinCount = Number(found[6]);
-            const authorsCountFetched = found[4].length;
+            const requestsToJoinCount = Number(found[4]);
+            const authorsCountFetched = found[2].length;
             const requestsToJoinFetched = await Promise.all(
                 Array(requestsToJoinCount)
                     .fill()
@@ -26,6 +26,7 @@ const ViewRequestsToJoin = ({storyAddress}) => {
                         return story.methods.requestsToJoin(index).call();
                     })) // Fetch requests one by one using the index
             setRequestsToJoin(requestsToJoinFetched);
+            console.log(requestsToJoinFetched);
             setAuthorsCount(authorsCountFetched);
     
         } catch (error) {
@@ -37,6 +38,7 @@ const ViewRequestsToJoin = ({storyAddress}) => {
         const newUsernameState = {};
         await Promise.all(
             requestsToJoin.map(async (request, index) => {
+                console.log(request);
                 const username = await factory.methods.authorUsernames(request[1]).call();
                 newUsernameState[index] = username;
             })
@@ -93,9 +95,9 @@ const ViewRequestsToJoin = ({storyAddress}) => {
                     <tr key={index}>
                         <td>{request[0]}</td>
                         <td>{usernames[index]}</td>
-                        <td>{request[4].toString() === "true" ? "All have Voted" : Number(request[3]) +"/"+ authorsCount}</td>
-                        <td>{request[4].toString() === "true" ? "accepted" : "not accepted"}</td>
-                        <td>{request[4].toString() === "false" ?
+                        <td>{request[3].toString() === "true" ? "All have Voted" : Number(request[2]) +"/"+ authorsCount}</td>
+                        <td>{request[3].toString() === "true" ? "accepted" : "not accepted"}</td>
+                        <td>{request[3].toString() === "false" ?
                             <Button disabled={voteLoading} onClick={() => handleVoteClick(index)}>
                                 {voteLoading ?
                                     <Spinner

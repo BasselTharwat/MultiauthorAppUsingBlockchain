@@ -22,7 +22,6 @@ const StoryIndex = ({ stories }) => {
                                     <Card.Body className="d-flex flex-column">
                                         <Card.Title className="text-truncate" style={{ maxWidth: "100%" }}>{story.title}</Card.Title>
                                         <Card.Text className="text-truncate" style={{ maxWidth: "100%", flex: "1 1 auto" }}>{story.mainIdea}</Card.Text>
-                                        <Card.Footer className='text-truncate' style={{ maxWidth: "100%" }}>{story.genre}</Card.Footer>
                                         <Link route={`/stories/${story.storyAddress}`}>
                                             <Button style={{marginTop: '10px'}} variant="secondary">Read Story</Button>
                                         </Link>
@@ -57,17 +56,14 @@ export async function getServerSideProps() {
             return {
                 storyAddress: address,
                 title: summary[0],
-                genre: summary[1],
-                mainIdea: summary[2],
-                authors: summary[3],
-                chapters: summary[4],
-                requestsToJoinCount: Number(summary[5]),
-                reportersCount: Number(summary[6]),
-                reported: summary[7],
-                coverPhotoIpfsHash: summary[8],
-                requestsToBuyCount: Number(summary[9]),
-                bought: summary[10],
-                owner: summary[11]
+                mainIdea: summary[1],
+                authors: summary[2],
+                chapters: summary[3],
+                requestsToJoinCount: Number(summary[4]),
+                coverPhotoIpfsHash: summary[5],
+                requestsToBuyCount: Number(summary[6]),
+                bought: summary[7],
+                owner: summary[8]
 
             };
         }));

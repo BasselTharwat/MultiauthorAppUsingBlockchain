@@ -8,8 +8,8 @@
         address[] public deployedStories;
         mapping(address => string) public authorUsernames;
 
-        function createStory(string memory _title, string memory _genre, string memory _mainIdea, string memory _coverPhoto) public {
-            Story newStory = new Story(msg.sender, _title, _genre, _mainIdea, _coverPhoto);
+        function createStory(string memory _title, string memory _mainIdea, string memory _coverPhoto) public {
+            Story newStory = new Story(msg.sender, _title, _mainIdea, _coverPhoto);
             deployedStories.push(address(newStory));
         }
 
@@ -19,18 +19,14 @@
 
         function addAuthorUsername(string memory username) public {
             authorUsernames[msg.sender] = username;
-        }
+        }   
     }
 
     contract Story {
         string public title;
-        string public genre;
         string public mainIdea;
         string public coverPhoto;
         bool private _locked;
-        uint public reportersCount;
-        bool public reported;
-        mapping(address => bool) public reporters;
 
         mapping(address => bool) public authorsForSolidity;
         address[] public authorsForReact;
@@ -68,25 +64,22 @@
             _locked = false;
         }
 
-        constructor(address _mainAuthor, string memory _title, string memory _genre, string memory _mainIdea, string memory _coverPhoto) payable{
+        constructor(address _mainAuthor, string memory _title, string memory _mainIdea, string memory _coverPhoto) payable{
             authorsForSolidity[_mainAuthor] = true;
             authorsForReact.push(_mainAuthor);
             title = _title;
-            genre = _genre;
             mainIdea = _mainIdea;
             coverPhoto = _coverPhoto;
         }
 
         function createRequestToBuy() public payable noReentrancy { //make price in wei
             require(!bought, "This story has been bought");
-            require(!reported, "This story has been reported");
             RequestToBuy storage newRequest = requestsToBuy.push();
             newRequest.price = msg.value;
             newRequest.bidder = msg.sender;
         }
         function approveRequestToBuy(uint256 _index) public payable noReentrancy {
             require(!bought, "This story has been bought");
-            require(!reported, "This story has been reported");
             require(authorsForSolidity[msg.sender], "Only an accepted author can approve a request");
 
             RequestToBuy storage request = requestsToBuy[_index];
@@ -127,7 +120,6 @@
 
         function createRequestToJoin(string memory _proposal) public noReentrancy {
             require(!bought, "This story has been bought");
-            require(!reported, "This story has been reported");
             require(!authorsForSolidity[msg.sender], "Author already exists in the list of authors");
             RequestToJoin storage newRequest = requestsToJoin.push();
             newRequest.proposal = _proposal;
@@ -137,7 +129,6 @@
 
         function approveRequestToJoin(uint256 _index) public noReentrancy {
             require(!bought, "This story has been bought");
-            require(!reported, "This story has been reported");
             require(authorsForSolidity[msg.sender], "Only an accepted author can approve a request");
 
             RequestToJoin storage request = requestsToJoin[_index];
@@ -159,7 +150,6 @@
 
         function createChapter(string memory _title, string memory _ipfsHash, address _parentChapter, address _childChapter) public noReentrancy {
             require(!bought, "This story has been bought");
-            require(!reported, "This story has been reported");
             require(authorsForSolidity[msg.sender], "Only an accepted author can create a chapter");
             require(chaptersForSolidity[_parentChapter] || (_parentChapter == address(0)), "Parent chapter must belong to the same story");
             require(chaptersForSolidity[_childChapter] || (_childChapter == address(0)), "Child chapter must belong to the same story");
@@ -177,29 +167,14 @@
             chaptersForSolidity[address(newChapter)] = true;
         }
 
-
-        function report() public noReentrancy {
-            require(!reported, "This story has been reported");
-            require(!reporters[msg.sender], "You have reported this story before");
-            reportersCount++;
-            reporters[msg.sender] = true;
-
-            if (reportersCount > 100) { //arbitrary number
-                reported = true;
-            }
-        }
-
         function getSummary() public view returns (
-            string memory, string memory, string memory, address[] memory, address[] memory, uint, uint, bool, string memory, uint, bool, address) {
+            string memory, string memory, address[] memory, address[] memory, uint, string memory, uint, bool, address) {
             return (
                 title,
-                genre,
                 mainIdea,
                 authorsForReact,
                 chaptersForReact,
                 requestsToJoin.length,
-                reportersCount,
-                reported,
                 coverPhoto,
                 requestsToBuy.length,
                 bought,

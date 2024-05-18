@@ -101,14 +101,15 @@ const ViewRequestsToBuy = ({storyAddress}) => {
     async function isAuthorCall(authors){
         const accounts = await web3.eth.getAccounts();
         setIsAuthor(authors.includes(accounts[0]));
+        console.log(authors.includes(accounts[0]));
     }
 
     async function viewRequests() {
         try {
             const found = await story.methods.getSummary().call();
-            isAuthorCall(found[3]);
-            const requestsToBuyCount = Number(found[9]);
-            const authorsCountFetched = found[3].length;
+            isAuthorCall(found[2]);
+            const requestsToBuyCount = Number(found[6]);
+            const authorsCountFetched = found[2].length;
             const requestsToBuyFetched = await Promise.all(
                 Array(requestsToBuyCount)
                     .fill()
@@ -171,7 +172,7 @@ const ViewRequestsToBuy = ({storyAddress}) => {
             <Table striped bordered hover style={{marginTop:"10px"}}>
                 <thead>
                     <tr>
-                        <th>Price</th>
+                        <th>Price in Eth</th>
                         <th>Bidder</th>
                         <th>Aprrovers Count</th>
                         <th>Status</th>
@@ -183,12 +184,12 @@ const ViewRequestsToBuy = ({storyAddress}) => {
                 <tbody>
                 {requestsToBuy.map((request, index) => (
                     <tr key={index}>
-                        <td>{web3.utils.FromWei(Number(request[0]),'ether')}</td>
+                        <td>{web3.utils.fromWei(Number(request[0]),'ether')}</td>
                         <td>{usernames[index]}</td>
-                        <td>{request[4].toString() === "true" ? "All have Voted" : Number(request[3]) +"/"+ authorsCount}</td>
-                        <td>{request[4].toString() === "true" ? "accepted" : "not accepted"}</td>
+                        <td>{request[3].toString() === "true" ? "All have Voted" : Number(request[2]) +"/"+ authorsCount}</td>
+                        <td>{request[3].toString() === "true" ? "accepted" : "not accepted"}</td>
                         {isAuthor && (
-                            <td>{request[4].toString() === "false" ?
+                            <td>{request[3].toString() === "false" ?
                             <Button disabled={voteLoading} onClick={() => handleVoteClick(index)}>
                                 {voteLoading ?
                                     <Spinner
