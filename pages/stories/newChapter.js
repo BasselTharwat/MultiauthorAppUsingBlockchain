@@ -10,6 +10,8 @@ import RenderGraph from '../../components/renderGraph.js';
 const NewChapter = ({storyAddress}) => {
   const story = Story(storyAddress);
 
+  const router = useRouter();
+
   const [file, setFile] = useState("");
   const [parentChapter, setParentChapter] = useState("0x0000000000000000000000000000000000000000");
   const [childChapter, setChildChapter] = useState("0x0000000000000000000000000000000000000000");
@@ -53,6 +55,10 @@ const NewChapter = ({storyAddress}) => {
       setChapterTitle("");
       setChildChapter("0x0000000000000000000000000000000000000000");
       setParentChapter("0x0000000000000000000000000000000000000000");
+
+      router.reload();
+
+      
 
     } catch (e) {
       console.log(e);

@@ -60,6 +60,8 @@ const ViewStory = ({storyAddress}) => {
     const [showCreateRequest, setShowCreateRequest] = useState(false);
     const [toggleView, setToggleView] = useState("Tree View"); //Chapter View or Tree View
     const [owner, setOwner] = useState("");
+    const [nextChapterExist, setNextChapterExist] = useState(true);
+    const [previousChapterExist, setPreviousChapterExist] = useState(true);
 
 
     
@@ -227,6 +229,8 @@ const ViewStory = ({storyAddress}) => {
 
                 
                 setCurrentChapter(address);
+                setNextChapterExist(found[5].length>0);
+                setPreviousChapterExist(found[4].length>0);
                 
             }
 
@@ -299,6 +303,7 @@ const ViewStory = ({storyAddress}) => {
                 gas: gasEstimate.toString(),
                 data: encode
             });
+            router.reload();
 
         }catch(error) {
             console.error('Error liking the chapter:', error);
@@ -346,6 +351,8 @@ const ViewStory = ({storyAddress}) => {
         
             <Card style={{ height: '80vh', width: '100%', maxWidth: '100vw', marginBottom: '10px' }}>
                 <Card.Header style={{textAlign: 'right'}}>
+                    {owner == "" &&
+                    <>
                     <Dropdown>
                         <Dropdown.Toggle
                             variant="secondary"
@@ -378,11 +385,19 @@ const ViewStory = ({storyAddress}) => {
                         }                           
                         </Dropdown.Menu>
                     </Dropdown>
+                    
+                    </>
+                    }
                 </Card.Header>
                 <Card.Body style={{maxHeight:'100%',overflow:'auto', textAlign: 'center'  }} >
                 {toggleView==="Chapter View" ? 
                     <>
-                    <Card.Title>{"Chapter: " + chapterSummary.title} <br/> {owner === "" ? "By: " + authorUsernames :  "Owned By: " + owner} <br/> {chapterSummary.likeCount>0 ? chapterSummary.likeCount+" likes" : ""}</Card.Title>
+                    <Card.Title>
+                        {"Chapter: " + chapterSummary.title} <br />
+                        {"By: " + authorUsernames} 
+                        {owner !== "" && <><br />{"Owner: " + owner}</>} <br />
+                        
+                    </Card.Title>
                     <Card.Text style={{height: '100%'}}>
                         {chapterSummary && chapterSummary.ipfsHash && ( 
                             <Files chapterCid={chapterSummary.ipfsHash} />)}
@@ -394,38 +409,50 @@ const ViewStory = ({storyAddress}) => {
                     
                 
                 </Card.Body>
-                <Card.Footer style={{ overflowWrap: 'break-word', wordWrap: 'break-word', textAlign: 'right' }}>
-                {toggleView === "Chapter View" ? 
-                    <>
-                    <Button variant="primary"  onClick={() => fetchPreviousChapter()} className="mr-2 mb-2" style={{marginRight: "10px"}}>
-                        <i className="bi bi-arrow-left"></i> 
-                    </Button>
-                    <Button variant="primary" onClick={() => fetchNextChapter()} className="mr-2 mb-2" style={{marginRight: "850px"}}>
-                        <i className="bi bi-arrow-right"></i> 
-                    </Button>
-                    {loadingLike ?
-                        <Spinner
-                            as="span"
-                            animation="border"
-                            size="sm"
-                            role="status"
-                            aria-hidden="true"
-                        /> :
-                        <HandThumbsUp
-                            size={30}
-                            style={{marginRight: "10px", marginBottom: '5px'}}
-                            color={loadingLike ? "gray" : "#007bff"}
-                            disabled={loadingLike}
-                            onClick={loadingLike ? null : handleLike}
-                    />}
-                    </>
-                        :
-                    <></>
-                    }
-                    <Button variant="secondary" onClick={() => handleToggleView()} className="mr-2 mb-2">
-                        {toggleView === "Chapter View" ? "Tree View" : "Chapter View"}
-                    </Button>
-                </Card.Footer>
+                <Card.Footer style={{ overflowWrap: 'break-word', wordWrap: 'break-word', textAlign: 'right', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+  <div>
+    {toggleView === "Chapter View" && (
+      <>
+    <Button variant="primary" disabled={!previousChapterExist} onClick={() => fetchPreviousChapter()} className="mr-2 mb-2" style={{marginRight: "10px"}}>
+    <i className="bi bi-arrow-left"></i> 
+    </Button>
+      
+    <Button variant="primary" disabled={!nextChapterExist} onClick={() => fetchNextChapter()} className="mr-2 mb-2" style={{marginRight: "10px"}}>
+    <i className="bi bi-arrow-right"></i> 
+    </Button>
+      </>
+    )}
+  </div>
+  <div style={{ display: 'flex', alignItems: 'center' }}>
+    {toggleView === "Chapter View" && (
+      <>
+        {chapterSummary.likeCount > 0 ? <span style={{ marginRight: '10px' }}>{chapterSummary.likeCount}</span> : ""}
+        {loadingLike ? (
+          <Spinner
+            as="span"
+            animation="border"
+            size="sm"
+            role="status"
+            aria-hidden="true"
+            style={{ marginRight: '10px' }}
+          />
+        ) : (
+          <HandThumbsUp
+            size={30}
+            style={{ marginRight: '10px', marginBottom: '5px' }}
+            color={loadingLike ? "gray" : "#007bff"}
+            disabled={loadingLike}
+            onClick={loadingLike ? null : handleLike}
+          />
+        )}
+      </>
+    )}
+        <Button variant="secondary" onClick={() => handleToggleView()} className="mr-2 mb-2">
+        {toggleView === "Chapter View" ? "Tree View" : "Chapter View"}
+        </Button>
+        </div>
+        </Card.Footer>
+
             </Card>
             <>
 
