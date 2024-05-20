@@ -32,14 +32,27 @@ const RenderGraph = (props) => {
     const options = {
         layout: {
             hierarchical: {
-                enabled: true,
+                enabled: true,  
                 parentCentralization: true,
                 sortMethod: 'directed',
-                shakeTowards: 'leaves'
-            }
+                shakeTowards: 'leaves',
+                levelSeparation: 150,
+                //nodeSpacing: 50, 
+            },
         },
         edges: {
             color: "#000000"
+        },
+        physics: {
+            enabled: true,
+            hierarchicalRepulsion: {
+                centralGravity: 0.0,
+                springLength: 200, 
+                springConstant: 0.01,
+                //nodeDistance: 100, 
+                damping: 0.09,
+            },
+            solver: 'hierarchicalRepulsion',
         },
         height: "100%",
         interaction: {

@@ -9,6 +9,8 @@ import { Table, Button, Spinner, Modal, Form } from 'react-bootstrap';
 const ViewRequestsToBuy = ({storyAddress}) => {
     const story = Story(storyAddress);
 
+    const router = useRouter();
+
     const [requestsToBuy, setRequestsToBuy] = useState([]);
     const [authorsCount, setAuthorsCount] = useState(0);
     const [voteLoading , setVoteLoading] = useState(false);
@@ -91,6 +93,8 @@ const ViewRequestsToBuy = ({storyAddress}) => {
                     setBiddingAmount(0);
                 }
             }
+
+            router.reload();
     
         } catch (error) {
             console.error('Error creating request:', error);
