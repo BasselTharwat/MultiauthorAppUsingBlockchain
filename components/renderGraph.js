@@ -37,7 +37,7 @@ const RenderGraph = (props) => {
                 sortMethod: 'directed',
                 shakeTowards: 'leaves',
                 levelSeparation: 150,
-                //nodeSpacing: 50, 
+                nodeSpacing: 100, 
             },
         },
         edges: {
@@ -49,7 +49,7 @@ const RenderGraph = (props) => {
                 centralGravity: 0.0,
                 springLength: 200, 
                 springConstant: 0.01,
-                //nodeDistance: 100, 
+                nodeDistance: 175, 
                 damping: 0.09,
             },
             solver: 'hierarchicalRepulsion',

@@ -84,6 +84,7 @@ const ViewStory = ({storyAddress}) => {
     const handleCreateRequest = async (event) => {
         event.preventDefault();
         setLoadingCreateRequest(true);
+        
         try {
             if(showUsernamePrompt){
                 const accounts = await web3.eth.getAccounts();
